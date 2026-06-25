@@ -31,6 +31,17 @@ export interface TaskItem {
   done: boolean;
 }
 
+export interface ApplyComprehensionInfo {
+  required: boolean;
+  passed: boolean;
+  thresholdPercent: number;
+  bestScorePercent?: number;
+  questionCount: number;
+  requirementCount: number;
+  scenarioCount: number;
+  attempts?: number;
+}
+
 export interface ApplyInstructions {
   changeName: string;
   changeDir: string;
@@ -44,6 +55,8 @@ export interface ApplyInstructions {
   tasks: TaskItem[];
   state: 'blocked' | 'all_done' | 'ready';
   missingArtifacts?: string[];
+  missingComprehension?: boolean;
+  comprehension?: ApplyComprehensionInfo;
   instruction: string;
   /** Referenced-store index (read-only upstream context; omitted when none declared) */
   references?: ReferenceIndexEntry[];

@@ -36,6 +36,11 @@ import {
 import { readRegistrySnapshot } from '../../core/store/registry.js';
 import { readProjectConfig, type ProjectConfig } from '../../core/project-config.js';
 import {
+  checkComprehensionGate,
+  ComprehensionPassError,
+  recordComprehensionPass,
+} from '../../core/comprehension/index.js';
+import {
   validateChangeExists,
   validateSchemaExists,
   type TaskItem,
@@ -60,6 +65,10 @@ export interface ApplyInstructionsOptions {
   store?: string;
   storePath?: string;
   json?: boolean;
+  recordComprehensionPass?: boolean;
+  score?: number;
+  attempt?: number;
+  questionCount?: number;
 }
 
 // -----------------------------------------------------------------------------
@@ -321,6 +330,7 @@ function parseTasksFile(content: string): TaskItem[] {
 export interface GenerateApplyInstructionsOptions {
   planningHome?: PlanningHome;
   references?: ReferenceIndexEntry[];
+  projectConfig?: ProjectConfig | null;
 }
 
 /**
@@ -418,6 +428,26 @@ export async function generateApplyInstructions(
     instruction = schemaInstruction?.trim() ?? 'Read context files, work through pending tasks, mark complete as you go.\nPause if you hit blockers or need clarification.';
   }
 
+  let missingComprehension: boolean | undefined;
+  let comprehension: ApplyInstructions['comprehension'];
+
+  if (state === 'ready') {
+    const specPaths = contextFiles.specs ?? [];
+    const gate = checkComprehensionGate(
+      changeDir,
+      specPaths,
+      options.projectConfig ?? readProjectConfig(projectRoot)
+    );
+    if (gate.active && !gate.passed && gate.info) {
+      state = 'blocked';
+      missingComprehension = true;
+      comprehension = gate.info;
+      instruction = `Complete the comprehension quiz in /opsx:apply before implementation (score ≥ ${gate.info.thresholdPercent}% on specs).`;
+    } else if (gate.active && gate.info) {
+      comprehension = gate.info;
+    }
+  }
+
   return {
     changeName,
     changeDir,
@@ -427,6 +457,8 @@ export async function generateApplyInstructions(
     tasks,
     state,
     missingArtifacts: missingArtifacts.length > 0 ? missingArtifacts : undefined,
+    missingComprehension,
+    comprehension,
     instruction,
     ...(references !== undefined ? { references } : {}),
   };
@@ -456,11 +488,101 @@ export async function applyInstructionsCommand(options: ApplyInstructionsOptions
       validateSchemaExists(options.schema, projectRoot);
     }
 
+    const { projectConfig, references } = await loadRootConfigContext(root);
+
+    if (options.recordComprehensionPass) {
+      if (options.score === undefined) {
+        spinner?.stop();
+        throw new Error('--score is required with --record-comprehension-pass');
+      }
+
+      const context = loadChangeContext(projectRoot, changeName, options.schema, {
+        changeDir: getChangeDir(planningHome, changeName),
+        planningHome,
+      });
+      const changeDir = context.changeDir;
+      const schema = resolveSchema(context.schemaName, projectRoot);
+      const specPaths: string[] = [];
+      const specsArtifact = schema.artifacts.find((a) => a.id === 'specs');
+      if (specsArtifact) {
+        specPaths.push(...resolveArtifactOutputs(changeDir, specsArtifact.generates));
+      }
+
+      try {
+        const record = recordComprehensionPass({
+          changeDir,
+          specPaths,
+          projectConfig,
+          scorePercent: options.score,
+          attempt: options.attempt ?? 1,
+          questionCount: options.questionCount ?? 0,
+        });
+
+        spinner?.stop();
+
+        if (options.json) {
+          const instructions = await generateApplyInstructions(projectRoot, changeName, options.schema, {
+            planningHome,
+            references,
+            projectConfig,
+          });
+          console.log(
+            JSON.stringify(
+              {
+                recorded: true,
+                comprehensionPass: record,
+                ...instructions,
+                root: toRootOutput(root),
+              },
+              null,
+              2
+            )
+          );
+          return;
+        }
+
+        console.log(`Comprehension pass recorded (${record.score_percent}%).`);
+        const instructions = await generateApplyInstructions(projectRoot, changeName, options.schema, {
+          planningHome,
+          references,
+          projectConfig,
+        });
+        printApplyInstructionsText(instructions);
+        return;
+      } catch (error) {
+        spinner?.stop();
+        if (error instanceof ComprehensionPassError) {
+          if (options.json) {
+            console.log(
+              JSON.stringify(
+                {
+                  recorded: false,
+                  status: [
+                    {
+                      severity: 'error',
+                      code: 'comprehension_score_below_threshold',
+                      message: error.message,
+                    },
+                  ],
+                  root: toRootOutput(root),
+                },
+                null,
+                2
+              )
+            );
+            process.exitCode = 1;
+            return;
+          }
+        }
+        throw error;
+      }
+    }
+
     // generateApplyInstructions uses loadChangeContext which auto-detects schema
-    const { references } = await loadRootConfigContext(root);
     const instructions = await generateApplyInstructions(projectRoot, changeName, options.schema, {
       planningHome,
       references,
+      projectConfig,
     });
 
     spinner?.stop();
@@ -478,7 +600,18 @@ export async function applyInstructionsCommand(options: ApplyInstructionsOptions
 }
 
 export function printApplyInstructionsText(instructions: ApplyInstructions): void {
-  const { changeName, schemaName, contextFiles, progress, tasks, state, missingArtifacts, instruction } = instructions;
+  const {
+    changeName,
+    schemaName,
+    contextFiles,
+    progress,
+    tasks,
+    state,
+    missingArtifacts,
+    missingComprehension,
+    comprehension,
+    instruction,
+  } = instructions;
 
   console.log(`## Apply: ${changeName}`);
   console.log(`Schema: ${schemaName}`);
@@ -495,6 +628,23 @@ export function printApplyInstructionsText(instructions: ApplyInstructions): voi
     console.log();
     console.log(`Missing artifacts: ${missingArtifacts.join(', ')}`);
     console.log('Use the openspec-continue-change skill to create these first.');
+    console.log();
+  }
+
+  if (state === 'blocked' && missingComprehension && comprehension) {
+    console.log('### ⚠️ Comprehension Required');
+    console.log();
+    console.log(
+      `Pass the spec comprehension quiz (score ≥ ${comprehension.thresholdPercent}%) before implementation.`
+    );
+    console.log(`Questions: ${comprehension.questionCount}`);
+    console.log(
+      `Specs: ${comprehension.requirementCount} requirements, ${comprehension.scenarioCount} scenarios`
+    );
+    if (comprehension.bestScorePercent !== undefined) {
+      console.log(`Previous score: ${comprehension.bestScorePercent}% (specs changed — retake required)`);
+    }
+    console.log('Complete the quiz via /opsx:apply.');
     console.log();
   }
 

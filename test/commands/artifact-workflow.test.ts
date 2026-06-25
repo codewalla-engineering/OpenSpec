@@ -74,6 +74,27 @@ describe('artifact-workflow CLI commands', () => {
     return changeDir;
   }
 
+  const DELTA_SPEC_CONTENT = `## ADDED Requirements
+
+### Requirement: Test feature
+The system SHALL provide test behavior.
+
+#### Scenario: Happy path
+- **WHEN** user invokes feature
+- **THEN** system responds correctly
+
+#### Scenario: Error path
+- **WHEN** input is invalid
+- **THEN** system returns an error
+`;
+
+  async function createChangeWithDeltaSpecs(changeName: string): Promise<string> {
+    const changeDir = await createTestChange(changeName, ['proposal', 'design', 'specs', 'tasks']);
+    const specsDir = path.join(changeDir, 'specs');
+    await fs.writeFile(path.join(specsDir, 'test-spec.md'), DELTA_SPEC_CONTENT);
+    return changeDir;
+  }
+
   describe('status command', () => {
     it('shows status for scaffolded change without proposal.md', async () => {
       // Create empty change directory (no proposal.md)
@@ -581,6 +602,127 @@ apply:
       // spec-driven schema has apply block with requires: [tasks], so should be ready
       expect(json.schemaName).toBe('spec-driven');
       expect(json.state).toBe('ready');
+    });
+
+    it('blocks apply when comprehension required and pass missing', async () => {
+      await createChangeWithDeltaSpecs('comp-blocked');
+
+      const result = await runCLI(
+        ['instructions', 'apply', '--change', 'comp-blocked', '--json'],
+        { cwd: tempDir }
+      );
+      expect(result.exitCode).toBe(0);
+      const json = JSON.parse(result.stdout);
+      expect(json.state).toBe('blocked');
+      expect(json.missingComprehension).toBe(true);
+      expect(json.comprehension.required).toBe(true);
+      expect(json.comprehension.passed).toBe(false);
+      expect(json.comprehension.questionCount).toBeGreaterThanOrEqual(5);
+    });
+
+    it('allows apply after recording comprehension pass', async () => {
+      await createChangeWithDeltaSpecs('comp-pass');
+
+      const recordResult = await runCLI(
+        [
+          'instructions',
+          'apply',
+          '--change',
+          'comp-pass',
+          '--record-comprehension-pass',
+          '--score',
+          '90',
+          '--attempt',
+          '1',
+          '--question-count',
+          '5',
+          '--json',
+        ],
+        { cwd: tempDir }
+      );
+      expect(recordResult.exitCode).toBe(0);
+      const recordJson = JSON.parse(recordResult.stdout);
+      expect(recordJson.recorded).toBe(true);
+      expect(recordJson.state).toBe('ready');
+
+      const applyResult = await runCLI(
+        ['instructions', 'apply', '--change', 'comp-pass', '--json'],
+        { cwd: tempDir }
+      );
+      expect(applyResult.exitCode).toBe(0);
+      const applyJson = JSON.parse(applyResult.stdout);
+      expect(applyJson.state).toBe('ready');
+      expect(applyJson.comprehension.passed).toBe(true);
+    });
+
+    it('rejects comprehension pass below threshold', async () => {
+      await createChangeWithDeltaSpecs('comp-fail');
+
+      const result = await runCLI(
+        [
+          'instructions',
+          'apply',
+          '--change',
+          'comp-fail',
+          '--record-comprehension-pass',
+          '--score',
+          '50',
+          '--json',
+        ],
+        { cwd: tempDir }
+      );
+      expect(result.exitCode).toBe(1);
+      const json = JSON.parse(result.stdout);
+      expect(json.recorded).toBe(false);
+    });
+
+    it('skips comprehension gate when disabled in config', async () => {
+      await fs.mkdir(path.join(tempDir, 'openspec'), { recursive: true });
+      await fs.writeFile(
+        path.join(tempDir, 'openspec', 'config.yaml'),
+        'schema: spec-driven\ncomprehension:\n  enabled: false\n'
+      );
+      await createChangeWithDeltaSpecs('comp-disabled');
+
+      const result = await runCLI(
+        ['instructions', 'apply', '--change', 'comp-disabled', '--json'],
+        { cwd: tempDir }
+      );
+      expect(result.exitCode).toBe(0);
+      const json = JSON.parse(result.stdout);
+      expect(json.state).toBe('ready');
+      expect(json.missingComprehension).toBeUndefined();
+    });
+
+    it('blocks apply again after delta spec edit invalidates pass', async () => {
+      const changeDir = await createChangeWithDeltaSpecs('comp-invalidate');
+
+      await runCLI(
+        [
+          'instructions',
+          'apply',
+          '--change',
+          'comp-invalidate',
+          '--record-comprehension-pass',
+          '--score',
+          '100',
+          '--json',
+        ],
+        { cwd: tempDir }
+      );
+
+      await fs.writeFile(
+        path.join(changeDir, 'specs', 'test-spec.md'),
+        DELTA_SPEC_CONTENT + '\n### Requirement: New req\nMore text.\n'
+      );
+
+      const result = await runCLI(
+        ['instructions', 'apply', '--change', 'comp-invalidate', '--json'],
+        { cwd: tempDir }
+      );
+      const json = JSON.parse(result.stdout);
+      expect(json.state).toBe('blocked');
+      expect(json.missingComprehension).toBe(true);
     });
 
     it('fallback: requires all artifacts when schema has no apply block', async () => {

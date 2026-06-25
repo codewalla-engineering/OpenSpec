@@ -5,6 +5,7 @@
  * templates file into workflow-focused modules.
  */
 import type { SkillTemplate, CommandTemplate } from '../types.js';
+import { PLAYWRIGHT_VERIFY_GUIDANCE } from './mcp-guidance.js';
 import { STORE_SELECTION_GUIDANCE } from './store-selection.js';
 
 export function getVerifyChangeSkillTemplate(): SkillTemplate {
@@ -112,7 +113,9 @@ ${STORE_SELECTION_GUIDANCE}
      - Add SUGGESTION: "Code pattern deviation: <details>"
      - Recommendation: "Consider following project pattern: <example>"
 
-8. **Generate Verification Report**
+${PLAYWRIGHT_VERIFY_GUIDANCE}
+
+9. **Generate Verification Report**
 
    **Summary Scorecard**:
    \`\`\`
@@ -124,6 +127,7 @@ ${STORE_SELECTION_GUIDANCE}
    | Completeness | X/Y tasks, N reqs|
    | Correctness  | M/N reqs covered |
    | Coherence    | Followed/Issues  |
+   | Browser      | Screenshot / Playwright tests (or skipped) |
    \`\`\`
 
    **Issues by Priority**:
@@ -284,7 +288,9 @@ ${STORE_SELECTION_GUIDANCE}
      - Add SUGGESTION: "Code pattern deviation: <details>"
      - Recommendation: "Consider following project pattern: <example>"
 
-8. **Generate Verification Report**
+${PLAYWRIGHT_VERIFY_GUIDANCE}
+
+9. **Generate Verification Report**
 
    **Summary Scorecard**:
    \`\`\`
@@ -296,6 +302,7 @@ ${STORE_SELECTION_GUIDANCE}
    | Completeness | X/Y tasks, N reqs|
    | Correctness  | M/N reqs covered |
    | Coherence    | Followed/Issues  |
+   | Browser      | Screenshot / Playwright tests (or skipped) |
    \`\`\`
 
    **Issues by Priority**:

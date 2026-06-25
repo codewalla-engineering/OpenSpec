@@ -43,7 +43,16 @@ rules:
   specs:
     - Use Given/When/Then format
     - Reference existing patterns before inventing new ones
+
+# Comprehension quiz before apply (enabled by default)
+comprehension:
+  enabled: true
+  threshold_percent: 80
+  min_questions: 5
+  max_questions: 10
 ```
+
+Set `comprehension.enabled: false` to skip the spec quiz gate on `/opsx:apply`.
 
 ### How It Works
 

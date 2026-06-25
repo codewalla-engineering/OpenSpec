@@ -5,6 +5,7 @@
  * templates file into workflow-focused modules.
  */
 import type { SkillTemplate, CommandTemplate } from '../types.js';
+import { ATLASSIAN_PROPOSE_GUIDANCE } from './mcp-guidance.js';
 import { STORE_SELECTION_GUIDANCE } from './store-selection.js';
 
 export function getOpsxProposeSkillTemplate(): SkillTemplate {
@@ -27,6 +28,8 @@ ${STORE_SELECTION_GUIDANCE}
 **Input**: The user's request should include a change name (kebab-case) OR a description of what they want to build.
 
 **Steps**
+
+${ATLASSIAN_PROPOSE_GUIDANCE}
 
 1. **If no clear input provided, ask what they want to build**
 
@@ -141,6 +144,8 @@ ${STORE_SELECTION_GUIDANCE}
 **Input**: The argument after \`/opsx:propose\` is the change name (kebab-case), OR a description of what the user wants to build.
 
 **Steps**
+
+${ATLASSIAN_PROPOSE_GUIDANCE}
 
 1. **If no input provided, ask what they want to build**
 

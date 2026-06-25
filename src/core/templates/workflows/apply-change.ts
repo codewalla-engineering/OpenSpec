@@ -5,6 +5,15 @@
  * templates file into workflow-focused modules.
  */
 import type { SkillTemplate, CommandTemplate } from '../types.js';
+import {
+  ATLASSIAN_ENRICHMENT_GUIDANCE,
+  CONTEXT7_LOOKUP_GUIDANCE,
+  PLAYWRIGHT_APPLY_GUARDRAIL,
+} from './mcp-guidance.js';
+import {
+  COMPREHENSION_APPLY_GUARDRAIL,
+  COMPREHENSION_QUIZ_GUIDANCE,
+} from './comprehension-guidance.js';
 import { STORE_SELECTION_GUIDANCE } from './store-selection.js';
 
 export function getApplyChangeSkillTemplate(): SkillTemplate {
@@ -50,18 +59,23 @@ ${STORE_SELECTION_GUIDANCE}
    - Dynamic instruction based on current state
 
    **Handle states:**
-   - If \`state: "blocked"\` (missing artifacts): show message, suggest using openspec-continue-change
+   - If \`state: "blocked"\` and \`missingArtifacts\`: show message, suggest using openspec-continue-change
+   - If \`state: "blocked"\` and \`missingComprehension\`: proceed to step 4 (comprehension quiz) — do NOT implement
    - If \`state: "all_done"\`: congratulate, suggest archive
-   - Otherwise: proceed to implementation
+   - If \`state: "ready"\`: proceed to step 5
 
-4. **Read context files**
+${ATLASSIAN_ENRICHMENT_GUIDANCE}
 
-   Read every file path listed under \`contextFiles\` from the apply instructions output.
+${COMPREHENSION_QUIZ_GUIDANCE}
+
+5. **Read context files**
+
+   After comprehension is passed (or not required), read every file path listed under \`contextFiles\` from the apply instructions output.
    The files depend on the schema being used:
    - **spec-driven**: proposal, specs, design, tasks
    - Other schemas: follow the contextFiles from CLI output
 
-5. **Show current progress**
+6. **Show current progress**
 
    Display:
    - Schema being used
@@ -69,10 +83,13 @@ ${STORE_SELECTION_GUIDANCE}
    - Remaining tasks overview
    - Dynamic instruction from CLI
 
-6. **Implement tasks (loop until done or blocked)**
+7. **Implement tasks (loop until done or blocked)**
 
    For each pending task:
    - Show which task is being worked on
+
+${CONTEXT7_LOOKUP_GUIDANCE}
+
    - Make the code changes required
    - Keep changes minimal and focused
    - Mark task complete in the tasks file: \`- [ ]\` → \`- [x]\`
@@ -84,7 +101,7 @@ ${STORE_SELECTION_GUIDANCE}
    - Error or blocker encountered → report and wait for guidance
    - User interrupts
 
-7. **On completion or pause, show status**
+8. **On completion or pause, show status**
 
    Display:
    - Tasks completed this session
@@ -152,6 +169,8 @@ What would you like to do?
 - Update task checkbox immediately after completing each task
 - Pause on errors, blockers, or unclear requirements - don't guess
 - Use contextFiles from CLI output, don't assume specific file names
+${COMPREHENSION_APPLY_GUARDRAIL}
+${PLAYWRIGHT_APPLY_GUARDRAIL}
 
 **Fluid Workflow Integration**
 
@@ -210,18 +229,23 @@ ${STORE_SELECTION_GUIDANCE}
    - Dynamic instruction based on current state
 
    **Handle states:**
-   - If \`state: "blocked"\` (missing artifacts): show message, suggest using \`/opsx:continue\`
+   - If \`state: "blocked"\` and \`missingArtifacts\`: show message, suggest using \`/opsx:continue\`
+   - If \`state: "blocked"\` and \`missingComprehension\`: proceed to step 4 (comprehension quiz) — do NOT implement
    - If \`state: "all_done"\`: congratulate, suggest archive
-   - Otherwise: proceed to implementation
+   - If \`state: "ready"\`: proceed to step 5
 
-4. **Read context files**
+${ATLASSIAN_ENRICHMENT_GUIDANCE}
 
-   Read every file path listed under \`contextFiles\` from the apply instructions output.
+${COMPREHENSION_QUIZ_GUIDANCE}
+
+5. **Read context files**
+
+   After comprehension is passed (or not required), read every file path listed under \`contextFiles\` from the apply instructions output.
    The files depend on the schema being used:
    - **spec-driven**: proposal, specs, design, tasks
    - Other schemas: follow the contextFiles from CLI output
 
-5. **Show current progress**
+6. **Show current progress**
 
    Display:
    - Schema being used
@@ -229,10 +253,13 @@ ${STORE_SELECTION_GUIDANCE}
    - Remaining tasks overview
    - Dynamic instruction from CLI
 
-6. **Implement tasks (loop until done or blocked)**
+7. **Implement tasks (loop until done or blocked)**
 
    For each pending task:
    - Show which task is being worked on
+
+${CONTEXT7_LOOKUP_GUIDANCE}
+
    - Make the code changes required
    - Keep changes minimal and focused
    - Mark task complete in the tasks file: \`- [ ]\` → \`- [x]\`
@@ -244,7 +271,7 @@ ${STORE_SELECTION_GUIDANCE}
    - Error or blocker encountered → report and wait for guidance
    - User interrupts
 
-7. **On completion or pause, show status**
+8. **On completion or pause, show status**
 
    Display:
    - Tasks completed this session
@@ -312,6 +339,8 @@ What would you like to do?
 - Update task checkbox immediately after completing each task
 - Pause on errors, blockers, or unclear requirements - don't guess
 - Use contextFiles from CLI output, don't assume specific file names
+${COMPREHENSION_APPLY_GUARDRAIL}
+${PLAYWRIGHT_APPLY_GUARDRAIL}
 
 **Fluid Workflow Integration**
 

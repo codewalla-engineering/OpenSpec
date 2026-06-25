@@ -508,6 +508,10 @@ program
   .option('--change <id>', 'Change name')
   .option('--schema <name>', 'Schema override (auto-detected from config.yaml)')
   .option('--json', 'Output as JSON')
+  .option('--record-comprehension-pass', 'Record a successful comprehension quiz pass (use with instructions apply)')
+  .option('--score <percent>', 'Quiz score 0-100 (required with --record-comprehension-pass)', parseInt)
+  .option('--attempt <n>', 'Quiz attempt number', parseInt)
+  .option('--question-count <n>', 'Number of quiz questions taken', parseInt)
   .option('--store <id>', STORE_OPTION_DESCRIPTION)
   .addOption(hiddenStorePathOption())
   .action(async (artifactId: string | undefined, options: InstructionsOptions) => {

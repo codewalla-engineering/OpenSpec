@@ -1,0 +1,142 @@
+import type { ProjectConfig } from '../project-config.js';
+import { resolveComprehensionConfig, type ComprehensionConfig } from './config.js';
+import { fingerprintSpecFiles } from './fingerprint.js';
+import {
+  buildPassRecord,
+  deleteSessionRecord,
+  isPassValid,
+  readPassRecord,
+  writePassRecord,
+  type ComprehensionPassRecord,
+} from './pass-record.js';
+import { computeSpecStats } from './stats.js';
+
+export {
+  DEFAULT_COMPREHENSION_CONFIG,
+  resolveComprehensionConfig,
+  type ComprehensionConfig,
+} from './config.js';
+export { fingerprintSpecFiles } from './fingerprint.js';
+export {
+  COMPREHENSION_PASS_FILENAME,
+  COMPREHENSION_SESSION_FILENAME,
+  buildPassRecord,
+  deleteSessionRecord,
+  isPassValid,
+  readPassRecord,
+  writePassRecord,
+  type ComprehensionPassRecord,
+} from './pass-record.js';
+export { computeQuestionCount, computeSpecStats, countSpecStats, type SpecStats } from './stats.js';
+
+export interface ComprehensionGateInfo {
+  required: boolean;
+  passed: boolean;
+  thresholdPercent: number;
+  bestScorePercent?: number;
+  questionCount: number;
+  requirementCount: number;
+  scenarioCount: number;
+  attempts?: number;
+}
+
+export interface ComprehensionGateResult {
+  active: boolean;
+  passed: boolean;
+  info?: ComprehensionGateInfo;
+}
+
+/**
+ * Evaluate whether apply is blocked by the comprehension gate.
+ */
+export function checkComprehensionGate(
+  changeDir: string,
+  specPaths: string[],
+  projectConfig: ProjectConfig | null | undefined
+): ComprehensionGateResult {
+  const config = resolveComprehensionConfig(projectConfig);
+
+  if (!config.enabled) {
+    return { active: false, passed: true };
+  }
+
+  if (specPaths.length === 0) {
+    return { active: false, passed: true };
+  }
+
+  const stats = computeSpecStats(specPaths, config);
+  if (stats.requirementCount === 0) {
+    return { active: false, passed: true };
+  }
+
+  const fingerprint = fingerprintSpecFiles(specPaths);
+  const record = readPassRecord(changeDir);
+  const passed = isPassValid(record, fingerprint);
+
+  const info: ComprehensionGateInfo = {
+    required: true,
+    passed,
+    thresholdPercent: config.thresholdPercent,
+    questionCount: stats.questionCount,
+    requirementCount: stats.requirementCount,
+    scenarioCount: stats.scenarioCount,
+    ...(record && !passed
+      ? { bestScorePercent: record.score_percent, attempts: record.attempt }
+      : record && passed
+        ? { attempts: record.attempt }
+        : {}),
+  };
+
+  return { active: true, passed, info };
+}
+
+export class ComprehensionPassError extends Error {
+  constructor(
+    message: string,
+    public readonly score: number,
+    public readonly threshold: number
+  ) {
+    super(message);
+    this.name = 'ComprehensionPassError';
+  }
+}
+
+/**
+ * Record a comprehension pass after quiz success.
+ */
+export function recordComprehensionPass(input: {
+  changeDir: string;
+  specPaths: string[];
+  projectConfig: ProjectConfig | null | undefined;
+  scorePercent: number;
+  attempt: number;
+  questionCount: number;
+}): ComprehensionPassRecord {
+  const config = resolveComprehensionConfig(input.projectConfig);
+
+  if (input.scorePercent < config.thresholdPercent) {
+    throw new ComprehensionPassError(
+      `Score ${input.scorePercent}% is below the ${config.thresholdPercent}% threshold required to apply.`,
+      input.scorePercent,
+      config.thresholdPercent
+    );
+  }
+
+  const stats =
+    input.questionCount > 0
+      ? { questionCount: input.questionCount }
+      : computeSpecStats(input.specPaths, config);
+
+  const fingerprint = fingerprintSpecFiles(input.specPaths);
+  const record = buildPassRecord({
+    scorePercent: input.scorePercent,
+    thresholdPercent: config.thresholdPercent,
+    attempt: input.attempt,
+    questionCount: stats.questionCount,
+    specFingerprint: fingerprint,
+  });
+
+  writePassRecord(input.changeDir, record);
+  deleteSessionRecord(input.changeDir);
+  return record;
+}

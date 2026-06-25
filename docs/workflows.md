@@ -247,6 +247,17 @@ AI:  ✓ Archived add-dark-mode
 
 Bulk archive detects when multiple changes touch the same specs and resolves conflicts by checking what's actually implemented.
 
+#### Comprehension quiz before apply
+
+By default, `/opsx:apply` runs a **multiple-choice comprehension quiz** on delta specs before any implementation (5–10 questions, scaled to spec size). You need **≥ 80%** to proceed. The CLI blocks `openspec instructions apply` until a pass is recorded; failed attempts get new questions.
+
+Disable for a project in `openspec/config.yaml`:
+
+```yaml
+comprehension:
+  enabled: false
+```
+
 ### Completing a Change
 
 The recommended completion flow:
