@@ -64,7 +64,9 @@ AI:  Created openspec/changes/add-dark-mode/
      Ready for implementation!
 
 You: /opsx:apply
-AI:  Implementing tasks...
+AI:  Comprehension check — 6 questions on your proposal, design, specs, and tasks...
+     ✓ 83% — ready to implement.
+     Implementing tasks...
      ✓ 1.1 Add theme context provider
      ✓ 1.2 Create toggle component
      ✓ 2.1 Add CSS variables
@@ -106,8 +108,9 @@ Now talk to your AI:
 
 - **Not sure what to build yet?** Start with `/opsx:explore`, a no-stakes thinking partner that reads your code, weighs options, and shapes a plan before anything is written. ([Explore guide](docs/explore.md))
 - **Already know what you want?** Go straight to `/opsx:propose <what-you-want-to-build>`.
+- **Ready to implement?** Run `/opsx:apply` — a short comprehension quiz checks you understand the proposal, design, specs, and tasks before any code is written.
 
-Both are in the default profile. If you want the expanded workflow (`/opsx:new`, `/opsx:continue`, `/opsx:ff`, `/opsx:verify`, `/opsx:bulk-archive`, `/opsx:onboard`), select it with `openspec config profile` and apply with `openspec update`.
+The default `core` profile includes `/opsx:explore`, `/opsx:propose`, `/opsx:apply`, `/opsx:sync`, and `/opsx:archive`. If you want the expanded workflow (`/opsx:new`, `/opsx:continue`, `/opsx:ff`, `/opsx:verify`, `/opsx:bulk-archive`, `/opsx:onboard`), select it with `openspec config profile` and apply with `openspec update`.
 
 > [!NOTE]
 > Not sure if your tool is supported? [View the full list](docs/supported-tools.md) – we support 25+ tools and growing.
@@ -181,6 +184,8 @@ openspec update
 **Model selection**: OpenSpec works best with high-reasoning models. We recommend Codex 5.5 and Opus 4.7 for both planning and implementation.
 
 **Context hygiene**: OpenSpec benefits from a clean context window. Clear your context before starting implementation and maintain good context hygiene throughout your session.
+
+**Comprehension check**: `/opsx:apply` runs a short quiz (enabled by default) on proposal, design, specs, and pending tasks before implementation. Questions test holistic understanding of the change, not task numbers or checklist trivia. Disable with `comprehension.enabled: false` in `openspec/config.yaml`. See [Workflows](docs/workflows.md#comprehension-quiz-before-apply).
 
 ## Contributing
 
