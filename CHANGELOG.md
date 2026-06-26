@@ -1,4 +1,4 @@
-# @fission-ai/openspec
+# @codewalla_india/openspec
 
 ## 1.4.1
 

@@ -1,5 +1,5 @@
 ---
-"@fission-ai/openspec": patch
+"@codewalla_india/openspec": patch
 ---
 
 fix(adapters): escape carriage returns in generated YAML frontmatter

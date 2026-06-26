@@ -9,19 +9,19 @@
 ### npm
 
 ```bash
-npm install -g @fission-ai/openspec@latest
+npm install -g @codewalla_india/openspec@latest
 ```
 
 ### pnpm
 
 ```bash
-pnpm add -g @fission-ai/openspec@latest
+pnpm add -g @codewalla_india/openspec@latest
 ```
 
 ### yarn
 
 ```bash
-yarn global add @fission-ai/openspec@latest
+yarn global add @codewalla_india/openspec@latest
 ```
 
 ### bun
@@ -30,7 +30,7 @@ Bun can install OpenSpec globally, but OpenSpec currently runs on Node.js.
 You still need Node.js 20.19.0 or higher available on `PATH`.
 
 ```bash
-bun add -g @fission-ai/openspec@latest
+bun add -g @codewalla_india/openspec@latest
 ```
 
 ## Nix
@@ -38,13 +38,13 @@ bun add -g @fission-ai/openspec@latest
 Run OpenSpec directly without installation:
 
 ```bash
-nix run github:Fission-AI/OpenSpec -- init
+nix run github:codewalla-engineering/OpenSpec -- init
 ```
 
 Or install to your profile:
 
 ```bash
-nix profile install github:Fission-AI/OpenSpec
+nix profile install github:codewalla-engineering/OpenSpec
 ```
 
 Or add to your development environment in `flake.nix`:
@@ -53,7 +53,7 @@ Or add to your development environment in `flake.nix`:
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    openspec.url = "github:Fission-AI/OpenSpec";
+    openspec.url = "github:codewalla-engineering/OpenSpec";
   };
 
   outputs = { nixpkgs, openspec, ... }: {
@@ -75,7 +75,7 @@ openspec --version
 Upgrade the package, then refresh each project's generated files:
 
 ```bash
-npm install -g @fission-ai/openspec@latest   # or pnpm/yarn/bun equivalent
+npm install -g @codewalla_india/openspec@latest   # or pnpm/yarn/bun equivalent
 openspec update                              # run inside each project
 ```
 
@@ -88,7 +88,7 @@ There's no `openspec uninstall` command, because OpenSpec is just a global packa
 **1. Remove the global package:**
 
 ```bash
-npm uninstall -g @fission-ai/openspec   # or: pnpm rm -g / yarn global remove / bun rm -g
+npm uninstall -g @codewalla_india/openspec   # or: pnpm rm -g / yarn global remove / bun rm -g
 ```
 
 **2. Remove OpenSpec from a project (optional).** Delete the `openspec/` directory if you no longer want its specs and changes:

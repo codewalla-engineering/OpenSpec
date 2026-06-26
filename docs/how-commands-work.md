@@ -129,7 +129,7 @@ For what each command does in detail, see [Commands](commands.md). For when to r
 Putting it together, here is the whole sequence with each step labeled by where it happens.
 
 ```text
-TERMINAL   $ npm install -g @fission-ai/openspec@latest
+TERMINAL   $ npm install -g @codewalla_india/openspec@latest
 TERMINAL   $ cd your-project
 TERMINAL   $ openspec init
               (installs slash commands into your AI tool)
