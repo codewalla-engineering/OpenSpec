@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/Fission-AI/OpenSpec">
+  <a href="https://github.com/codewalla-engineering/OpenSpec">
     <picture>
       <source srcset="assets/openspec_bg.png">
       <img src="assets/openspec_bg.png" alt="OpenSpec logo">
@@ -8,8 +8,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Fission-AI/OpenSpec/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Fission-AI/OpenSpec/actions/workflows/ci.yml/badge.svg" /></a>
-  <a href="https://www.npmjs.com/package/@fission-ai/openspec"><img alt="npm version" src="https://img.shields.io/npm/v/@fission-ai/openspec?style=flat-square" /></a>
+  <a href="https://github.com/codewalla-engineering/OpenSpec/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/codewalla-engineering/OpenSpec/actions/workflows/ci.yml/badge.svg" /></a>
+  <a href="https://www.npmjs.com/package/@codewalla_india/openspec"><img alt="npm version" src="https://img.shields.io/npm/v/@codewalla_india/openspec?style=flat-square" /></a>
   <a href="./LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" /></a>
   <a href="https://discord.gg/YctCnvvshC"><img alt="Discord" src="https://img.shields.io/discord/1411657095639601154?style=flat-square&logo=discord&logoColor=white&label=Discord&suffix=%20online" /></a>
 </p>
@@ -17,9 +17,9 @@
 <details>
 <summary><strong>The most loved spec framework.</strong></summary>
 
-[![Stars](https://img.shields.io/github/stars/Fission-AI/OpenSpec?style=flat-square&label=Stars)](https://github.com/Fission-AI/OpenSpec/stargazers)
-[![Downloads](https://img.shields.io/npm/dm/@fission-ai/openspec?style=flat-square&label=Downloads/mo)](https://www.npmjs.com/package/@fission-ai/openspec)
-[![Contributors](https://img.shields.io/github/contributors/Fission-AI/OpenSpec?style=flat-square&label=Contributors)](https://github.com/Fission-AI/OpenSpec/graphs/contributors)
+[![Stars](https://img.shields.io/github/stars/codewalla-engineering/OpenSpec?style=flat-square&label=Stars)](https://github.com/codewalla-engineering/OpenSpec/stargazers)
+[![Downloads](https://img.shields.io/npm/dm/@codewalla_india/openspec?style=flat-square&label=Downloads/mo)](https://www.npmjs.com/package/@codewalla_india/openspec)
+[![Contributors](https://img.shields.io/github/contributors/codewalla-engineering/OpenSpec?style=flat-square&label=Contributors)](https://github.com/codewalla-engineering/OpenSpec/graphs/contributors)
 
 </details>
 <p></p>
@@ -64,7 +64,9 @@ AI:  Created openspec/changes/add-dark-mode/
      Ready for implementation!
 
 You: /opsx:apply
-AI:  Implementing tasks...
+AI:  Comprehension check — 6 questions on your proposal, design, specs, and tasks...
+     ✓ 83% — ready to implement.
+     Implementing tasks...
      ✓ 1.1 Add theme context provider
      ✓ 1.2 Create toggle component
      ✓ 2.1 Add CSS variables
@@ -92,7 +94,7 @@ AI:  Archived to openspec/changes/archive/2025-01-23-add-dark-mode/
 Install OpenSpec globally:
 
 ```bash
-npm install -g @fission-ai/openspec@latest
+npm install -g @codewalla_india/openspec@latest
 ```
 
 Then navigate to your project directory and initialize:
@@ -106,8 +108,9 @@ Now talk to your AI:
 
 - **Not sure what to build yet?** Start with `/opsx:explore`, a no-stakes thinking partner that reads your code, weighs options, and shapes a plan before anything is written. ([Explore guide](docs/explore.md))
 - **Already know what you want?** Go straight to `/opsx:propose <what-you-want-to-build>`.
+- **Ready to implement?** Run `/opsx:apply` — a short comprehension quiz checks you understand the proposal, design, specs, and tasks before any code is written.
 
-Both are in the default profile. If you want the expanded workflow (`/opsx:new`, `/opsx:continue`, `/opsx:ff`, `/opsx:verify`, `/opsx:bulk-archive`, `/opsx:onboard`), select it with `openspec config profile` and apply with `openspec update`.
+The default `core` profile includes `/opsx:explore`, `/opsx:propose`, `/opsx:apply`, `/opsx:sync`, and `/opsx:archive`. If you want the expanded workflow (`/opsx:new`, `/opsx:continue`, `/opsx:ff`, `/opsx:verify`, `/opsx:bulk-archive`, `/opsx:onboard`), select it with `openspec config profile` and apply with `openspec update`.
 
 > [!NOTE]
 > Not sure if your tool is supported? [View the full list](docs/supported-tools.md) – we support 25+ tools and growing.
@@ -165,7 +168,7 @@ AI coding assistants are powerful but unpredictable when requirements live only 
 **Upgrade the package**
 
 ```bash
-npm install -g @fission-ai/openspec@latest
+npm install -g @codewalla_india/openspec@latest
 ```
 
 **Refresh agent instructions**
@@ -181,6 +184,8 @@ openspec update
 **Model selection**: OpenSpec works best with high-reasoning models. We recommend Codex 5.5 and Opus 4.7 for both planning and implementation.
 
 **Context hygiene**: OpenSpec benefits from a clean context window. Clear your context before starting implementation and maintain good context hygiene throughout your session.
+
+**Comprehension check**: `/opsx:apply` runs a short quiz (enabled by default) on proposal, design, specs, and pending tasks before implementation. Questions test holistic understanding of the change, not task numbers or checklist trivia. Disable with `comprehension.enabled: false` in `openspec/config.yaml`. See [Workflows](docs/workflows.md#comprehension-quiz-before-apply).
 
 ## Contributing
 

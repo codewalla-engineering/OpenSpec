@@ -249,7 +249,7 @@ Bulk archive detects when multiple changes touch the same specs and resolves con
 
 #### Comprehension quiz before apply
 
-By default, `/opsx:apply` runs a **multiple-choice comprehension quiz** on delta specs and pending tasks before any implementation (5–10 questions, scaled to spec and task size). You need **≥ 80%** to proceed. The CLI blocks `openspec instructions apply` until a pass is recorded; failed attempts get new questions.
+By default, `/opsx:apply` runs a **multiple-choice comprehension quiz** on proposal, design, delta specs, and pending tasks before any implementation (5–10 questions, scaled to change size). Questions test holistic understanding—motivation, design decisions, requirements, and implementation approach—not task numbers or verbatim checkbox text. You need **≥ 80%** to proceed. The CLI blocks `openspec instructions apply` until a pass is recorded; failed attempts get new questions.
 
 Disable for a project in `openspec/config.yaml`:
 

@@ -446,7 +446,7 @@ export async function generateApplyInstructions(
       state = 'blocked';
       missingComprehension = true;
       comprehension = gate.info;
-      instruction = `Complete the comprehension quiz in /opsx:apply before implementation (score ≥ ${gate.info.thresholdPercent}% on specs and tasks).`;
+      instruction = `Complete the comprehension quiz in /opsx:apply before implementation (score ≥ ${gate.info.thresholdPercent}% on proposal, design, specs, and tasks).`;
     } else if (gate.active && gate.info) {
       comprehension = gate.info;
     }

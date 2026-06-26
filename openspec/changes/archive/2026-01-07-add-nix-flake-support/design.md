@@ -6,7 +6,7 @@ The Nix ecosystem has specific patterns for packaging Node.js/pnpm projects that
 
 ## Goals
 
-- Enable OpenSpec to be run directly via `nix run github:Fission-AI/OpenSpec`
+- Enable OpenSpec to be run directly via `nix run github:codewalla-engineering/OpenSpec`
 - Support all major platforms (Linux x86/ARM, macOS x86/ARM)
 - Use existing pnpm-lock.yaml for reproducible builds
 - Provide development environment for Nix users

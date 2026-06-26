@@ -11,17 +11,25 @@ export const COMPREHENSION_QUIZ_GUIDANCE = `4. **Comprehension quiz (required be
 
    - If \`missingComprehension\` is true OR \`comprehension.required && !comprehension.passed\`:
      - Do NOT edit application source code or mark task checkboxes yet
-     - Read \`contextFiles.specs\`, \`contextFiles.tasks\` (or the \`tasks\` array in apply JSON), and \`contextFiles.design\` (design for distractors only)
+     - Read \`contextFiles.proposal\`, \`contextFiles.design\`, \`contextFiles.specs\`, and \`contextFiles.tasks\` (or the \`tasks\` array in apply JSON)
      - Use \`comprehension.questionCount\` from the JSON as the number of questions
 
    **Generate questions**
    - Create exactly \`comprehension.questionCount\` multiple-choice questions
-   - Each question MUST map to one of:
-     - a \`### Requirement:\` or \`#### Scenario:\` from delta specs, OR
-     - a pending (unchecked) task from \`tasks.md\` / the apply \`tasks\` array
-   - When both specs and pending tasks exist, include at least 2 task-based questions and cover the rest from specs/scenarios
+   - Each question MUST map to one artifact category:
+     - **Proposal**: motivation, scope, or impact from \`proposal.md\`
+     - **Design**: decisions, trade-offs, or approach from \`design.md\`
+     - **Specs**: a \`### Requirement:\` or \`#### Scenario:\` from delta specs
+     - **Tasks**: conceptual understanding of the implementation plan from pending (unchecked) tasks
+   - When proposal, design, specs (with requirements), and pending tasks all exist, include at least one question from each category; fill remaining slots from any category
    - Do NOT use completed tasks as question sources
-   - Each question: 4 options (1 correct from the source item, 3 plausible distractors from other requirements/scenarios/tasks in the change)
+   - Each question: 4 options (1 correct from the source substance, 3 plausible distractors from other proposal/design/requirements/scenarios/task substance in the change)
+
+   **Task question quality**
+   - Test scope, approach, dependencies, sequencing rationale, or alignment with proposal/design
+   - **Forbidden**: task numbers, checklist order, "which task says X verbatim", or answers identifiable only by task index or checkbox position
+   - Good: "What is the primary file where quiz rules are centralized?" (answer from task substance)
+   - Bad: "Which task number updates \`comprehension-guidance.ts\`?" or "What is the exact text of task 2.1?"
 
    **Present and grade**
    - Use the **AskUserQuestion tool** for each question (one at a time)
@@ -31,7 +39,7 @@ export const COMPREHENSION_QUIZ_GUIDANCE = `4. **Comprehension quiz (required be
    **On failure (score below threshold)**
    - Announce score and that a new quiz is required
    - Update \`.comprehension-session.yaml\` in the change dir with \`used_sources\` from this attempt
-   - Generate a NEW question set using different requirement/scenario/task sources (avoid \`used_sources\`)
+   - Generate a NEW question set using different proposal/design/requirement/scenario/task sources (avoid \`used_sources\`)
    - Retry until pass
 
    **On pass**
@@ -45,7 +53,7 @@ export const COMPREHENSION_QUIZ_GUIDANCE = `4. **Comprehension quiz (required be
    \`\`\`
    ## Applying: <change-name> — comprehension check
 
-   Specs: <requirementCount> requirements, <scenarioCount> scenarios; Tasks: <pendingTaskCount> pending → <questionCount> questions
+   Proposal, design, specs (<requirementCount> requirements, <scenarioCount> scenarios), tasks (<pendingTaskCount> pending) → <questionCount> questions
 
    Question 1/N: ...
    ...

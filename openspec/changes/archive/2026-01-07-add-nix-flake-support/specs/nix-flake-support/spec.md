@@ -25,12 +25,12 @@ The system SHALL provide a Nix flake that builds OpenSpec for multiple platforms
 The system SHALL allow users to run OpenSpec directly from GitHub without installing.
 
 #### Scenario: Run init command from GitHub
-- **WHEN** user runs `nix run github:Fission-AI/OpenSpec -- init`
+- **WHEN** user runs `nix run github:codewalla-engineering/OpenSpec -- init`
 - **THEN** system downloads and builds OpenSpec
 - **AND** executes `openspec init` command
 
 #### Scenario: Run any OpenSpec command
-- **WHEN** user runs `nix run github:Fission-AI/OpenSpec -- <command> <args>`
+- **WHEN** user runs `nix run github:codewalla-engineering/OpenSpec -- <command> <args>`
 - **THEN** system executes `openspec <command> <args>`
 
 ### Requirement: pnpm dependency management
