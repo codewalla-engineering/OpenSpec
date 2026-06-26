@@ -7,6 +7,7 @@ const SCENARIO_HEADER_REGEX = /^####\s*Scenario:/gim;
 export interface SpecStats {
   requirementCount: number;
   scenarioCount: number;
+  pendingTaskCount: number;
   questionCount: number;
 }
 
@@ -18,7 +19,7 @@ function countScenariosInBlock(raw: string): number {
 /**
  * Count requirements and scenarios across delta spec files.
  */
-export function countSpecStats(specPaths: string[]): Omit<SpecStats, 'questionCount'> {
+export function countSpecStats(specPaths: string[]): Pick<SpecStats, 'requirementCount' | 'scenarioCount'> {
   let requirementCount = 0;
   let scenarioCount = 0;
 
@@ -40,22 +41,32 @@ function clamp(min: number, max: number, value: number): number {
 }
 
 /**
- * Target quiz length from spec size: clamp(min, max, round(req * 0.6 + scenarios * 0.15)).
+ * Target quiz length from spec and task size:
+ * clamp(min, max, round(req * 0.6 + scenarios * 0.15 + pendingTasks * 0.15)).
  */
 export function computeQuestionCount(
   requirementCount: number,
   scenarioCount: number,
+  pendingTaskCount: number,
   config: Pick<ComprehensionConfig, 'minQuestions' | 'maxQuestions'>
 ): number {
-  const raw = Math.round(requirementCount * 0.6 + scenarioCount * 0.15);
+  const raw = Math.round(
+    requirementCount * 0.6 + scenarioCount * 0.15 + pendingTaskCount * 0.15
+  );
   return clamp(config.minQuestions, config.maxQuestions, raw);
 }
 
 export function computeSpecStats(
   specPaths: string[],
-  config: Pick<ComprehensionConfig, 'minQuestions' | 'maxQuestions'>
+  config: Pick<ComprehensionConfig, 'minQuestions' | 'maxQuestions'>,
+  pendingTaskCount = 0
 ): SpecStats {
   const { requirementCount, scenarioCount } = countSpecStats(specPaths);
-  const questionCount = computeQuestionCount(requirementCount, scenarioCount, config);
-  return { requirementCount, scenarioCount, questionCount };
+  const questionCount = computeQuestionCount(
+    requirementCount,
+    scenarioCount,
+    pendingTaskCount,
+    config
+  );
+  return { requirementCount, scenarioCount, pendingTaskCount, questionCount };
 }

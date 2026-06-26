@@ -39,6 +39,7 @@ export interface ApplyComprehensionInfo {
   questionCount: number;
   requirementCount: number;
   scenarioCount: number;
+  pendingTaskCount: number;
   attempts?: number;
 }
 

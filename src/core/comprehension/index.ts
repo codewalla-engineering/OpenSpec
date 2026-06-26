@@ -37,7 +37,13 @@ export interface ComprehensionGateInfo {
   questionCount: number;
   requirementCount: number;
   scenarioCount: number;
+  pendingTaskCount: number;
   attempts?: number;
+}
+
+export interface ComprehensionGateOptions {
+  tasksPath?: string | null;
+  pendingTaskCount?: number;
 }
 
 export interface ComprehensionGateResult {
@@ -52,9 +58,12 @@ export interface ComprehensionGateResult {
 export function checkComprehensionGate(
   changeDir: string,
   specPaths: string[],
-  projectConfig: ProjectConfig | null | undefined
+  projectConfig: ProjectConfig | null | undefined,
+  gateOptions: ComprehensionGateOptions = {}
 ): ComprehensionGateResult {
   const config = resolveComprehensionConfig(projectConfig);
+  const pendingTaskCount = gateOptions.pendingTaskCount ?? 0;
+  const tasksPath = gateOptions.tasksPath ?? null;
 
   if (!config.enabled) {
     return { active: false, passed: true };
@@ -64,12 +73,12 @@ export function checkComprehensionGate(
     return { active: false, passed: true };
   }
 
-  const stats = computeSpecStats(specPaths, config);
+  const stats = computeSpecStats(specPaths, config, pendingTaskCount);
   if (stats.requirementCount === 0) {
     return { active: false, passed: true };
   }
 
-  const fingerprint = fingerprintSpecFiles(specPaths);
+  const fingerprint = fingerprintSpecFiles(specPaths, tasksPath);
   const record = readPassRecord(changeDir);
   const passed = isPassValid(record, fingerprint);
 
@@ -80,6 +89,7 @@ export function checkComprehensionGate(
     questionCount: stats.questionCount,
     requirementCount: stats.requirementCount,
     scenarioCount: stats.scenarioCount,
+    pendingTaskCount: stats.pendingTaskCount,
     ...(record && !passed
       ? { bestScorePercent: record.score_percent, attempts: record.attempt }
       : record && passed
@@ -107,10 +117,12 @@ export class ComprehensionPassError extends Error {
 export function recordComprehensionPass(input: {
   changeDir: string;
   specPaths: string[];
+  tasksPath?: string | null;
   projectConfig: ProjectConfig | null | undefined;
   scorePercent: number;
   attempt: number;
   questionCount: number;
+  pendingTaskCount?: number;
 }): ComprehensionPassRecord {
   const config = resolveComprehensionConfig(input.projectConfig);
 
@@ -125,9 +137,9 @@ export function recordComprehensionPass(input: {
   const stats =
     input.questionCount > 0
       ? { questionCount: input.questionCount }
-      : computeSpecStats(input.specPaths, config);
+      : computeSpecStats(input.specPaths, config, input.pendingTaskCount ?? 0);
 
-  const fingerprint = fingerprintSpecFiles(input.specPaths);
+  const fingerprint = fingerprintSpecFiles(input.specPaths, input.tasksPath);
   const record = buildPassRecord({
     scorePercent: input.scorePercent,
     thresholdPercent: config.thresholdPercent,

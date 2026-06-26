@@ -433,16 +433,20 @@ export async function generateApplyInstructions(
 
   if (state === 'ready') {
     const specPaths = contextFiles.specs ?? [];
+    const tasksPath =
+      tracksFile && tracksFileExists ? path.join(changeDir, tracksFile) : null;
+    const pendingTaskCount = tasks.filter((task) => !task.done).length;
     const gate = checkComprehensionGate(
       changeDir,
       specPaths,
-      options.projectConfig ?? readProjectConfig(projectRoot)
+      options.projectConfig ?? readProjectConfig(projectRoot),
+      { tasksPath, pendingTaskCount }
     );
     if (gate.active && !gate.passed && gate.info) {
       state = 'blocked';
       missingComprehension = true;
       comprehension = gate.info;
-      instruction = `Complete the comprehension quiz in /opsx:apply before implementation (score ≥ ${gate.info.thresholdPercent}% on specs).`;
+      instruction = `Complete the comprehension quiz in /opsx:apply before implementation (score ≥ ${gate.info.thresholdPercent}% on specs and tasks).`;
     } else if (gate.active && gate.info) {
       comprehension = gate.info;
     }
@@ -507,11 +511,14 @@ export async function applyInstructionsCommand(options: ApplyInstructionsOptions
       if (specsArtifact) {
         specPaths.push(...resolveArtifactOutputs(changeDir, specsArtifact.generates));
       }
+      const tracksFile = schema.apply?.tracks ?? null;
+      const tasksPath = tracksFile ? path.join(changeDir, tracksFile) : null;
 
       try {
         const record = recordComprehensionPass({
           changeDir,
           specPaths,
+          tasksPath,
           projectConfig,
           scorePercent: options.score,
           attempt: options.attempt ?? 1,
@@ -635,11 +642,11 @@ export function printApplyInstructionsText(instructions: ApplyInstructions): voi
     console.log('### ⚠️ Comprehension Required');
     console.log();
     console.log(
-      `Pass the spec comprehension quiz (score ≥ ${comprehension.thresholdPercent}%) before implementation.`
+      `Pass the spec and task comprehension quiz (score ≥ ${comprehension.thresholdPercent}%) before implementation.`
     );
     console.log(`Questions: ${comprehension.questionCount}`);
     console.log(
-      `Specs: ${comprehension.requirementCount} requirements, ${comprehension.scenarioCount} scenarios`
+      `Specs: ${comprehension.requirementCount} requirements, ${comprehension.scenarioCount} scenarios; Tasks: ${comprehension.pendingTaskCount} pending`
     );
     if (comprehension.bestScorePercent !== undefined) {
       console.log(`Previous score: ${comprehension.bestScorePercent}% (specs changed — retake required)`);

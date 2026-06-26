@@ -10,16 +10,18 @@ export const COMPREHENSION_QUIZ_GUIDANCE = `4. **Comprehension quiz (required be
    After \`openspec instructions apply --change "<name>" --json\`, check comprehension status:
 
    - If \`missingComprehension\` is true OR \`comprehension.required && !comprehension.passed\`:
-     - Do NOT read \`tasks.md\` for implementation yet
-     - Do NOT edit application source code or mark task checkboxes
-     - Read ONLY \`contextFiles.specs\` (and \`contextFiles.design\` for distractors only)
+     - Do NOT edit application source code or mark task checkboxes yet
+     - Read \`contextFiles.specs\`, \`contextFiles.tasks\` (or the \`tasks\` array in apply JSON), and \`contextFiles.design\` (design for distractors only)
      - Use \`comprehension.questionCount\` from the JSON as the number of questions
 
    **Generate questions**
    - Create exactly \`comprehension.questionCount\` multiple-choice questions
-   - Each question MUST map to a \`### Requirement:\` or \`#### Scenario:\` from delta specs
-   - Do NOT derive questions from \`tasks.md\`
-   - Each question: 4 options (1 correct from the spec, 3 plausible distractors from other requirements/scenarios in the change)
+   - Each question MUST map to one of:
+     - a \`### Requirement:\` or \`#### Scenario:\` from delta specs, OR
+     - a pending (unchecked) task from \`tasks.md\` / the apply \`tasks\` array
+   - When both specs and pending tasks exist, include at least 2 task-based questions and cover the rest from specs/scenarios
+   - Do NOT use completed tasks as question sources
+   - Each question: 4 options (1 correct from the source item, 3 plausible distractors from other requirements/scenarios/tasks in the change)
 
    **Present and grade**
    - Use the **AskUserQuestion tool** for each question (one at a time)
@@ -29,7 +31,7 @@ export const COMPREHENSION_QUIZ_GUIDANCE = `4. **Comprehension quiz (required be
    **On failure (score below threshold)**
    - Announce score and that a new quiz is required
    - Update \`.comprehension-session.yaml\` in the change dir with \`used_sources\` from this attempt
-   - Generate a NEW question set using different requirement/scenario sources (avoid \`used_sources\`)
+   - Generate a NEW question set using different requirement/scenario/task sources (avoid \`used_sources\`)
    - Retry until pass
 
    **On pass**
@@ -43,7 +45,7 @@ export const COMPREHENSION_QUIZ_GUIDANCE = `4. **Comprehension quiz (required be
    \`\`\`
    ## Applying: <change-name> — comprehension check
 
-   Specs: <requirementCount> requirements, <scenarioCount> scenarios → <questionCount> questions
+   Specs: <requirementCount> requirements, <scenarioCount> scenarios; Tasks: <pendingTaskCount> pending → <questionCount> questions
 
    Question 1/N: ...
    ...
