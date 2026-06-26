@@ -1,0 +1,8 @@
+version: 1
+passed: true
+score_percent: 100
+threshold_percent: 80
+attempt: 1
+question_count: 5
+spec_fingerprint: cee137c1f1cf2be8a550362e3e182655ed0cae4f1027b7f2ff11750790dc7d01
+passed_at: 2026-06-26T12:07:27.503Z
