@@ -29,23 +29,29 @@ The system SHALL log every export action.
 describe('comprehension stats', () => {
   it('clamps question count between min and max', () => {
     expect(
-      computeQuestionCount(1, 1, {
+      computeQuestionCount(1, 1, 0, {
         minQuestions: 5,
         maxQuestions: 10,
       })
     ).toBe(5);
     expect(
-      computeQuestionCount(20, 30, {
+      computeQuestionCount(20, 30, 0, {
         minQuestions: 5,
         maxQuestions: 10,
       })
     ).toBe(10);
     expect(
-      computeQuestionCount(8, 12, {
+      computeQuestionCount(8, 12, 0, {
         minQuestions: 5,
         maxQuestions: 10,
       })
     ).toBe(7);
+    expect(
+      computeQuestionCount(1, 1, 10, {
+        minQuestions: 5,
+        maxQuestions: 10,
+      })
+    ).toBe(5);
   });
 });
 

@@ -61,6 +61,26 @@ describe('comprehension pass record', () => {
     expect(isPassValid(readPassRecord(dir), newFp)).toBe(false);
   });
 
+  it('invalidates pass when tasks content changes', async () => {
+    const tasksPath = join(dir, 'tasks.md');
+    await writeFile(tasksPath, '- [ ] Implement feature A\n');
+    const fp = fingerprintSpecFiles([specPath], tasksPath);
+    const record = buildPassRecord({
+      scorePercent: 90,
+      thresholdPercent: 80,
+      attempt: 1,
+      questionCount: 5,
+      specFingerprint: fp,
+    });
+    writePassRecord(dir, record);
+
+    expect(isPassValid(readPassRecord(dir), fp)).toBe(true);
+
+    await writeFile(tasksPath, '- [ ] Implement feature B\n');
+    const newFp = fingerprintSpecFiles([specPath], tasksPath);
+    expect(isPassValid(readPassRecord(dir), newFp)).toBe(false);
+  });
+
   it('checkComprehensionGate blocks without pass', () => {
     const gate = checkComprehensionGate(dir, [specPath], null);
     expect(gate.active).toBe(true);

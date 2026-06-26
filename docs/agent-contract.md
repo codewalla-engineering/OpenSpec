@@ -62,7 +62,7 @@ Change: `{ "id", "title", "deltaCount", "deltas": [...], "root" }`. Spec: `{ "id
 `ReferenceIndexEntry`: `{ "store_id", "root"?, "specs"?: [{id,summary}], "fetch"?, "status": [] }` — resolved entries carry root/specs/fetch; unresolved carry store_id + warning status. Index capped at 50KB (`reference_index_truncated`).
 
 ### 4.6 `instructions apply --json`
-`{ "changeName", "changeDir", "schemaName", "contextFiles": { "<artifactId>": ["/abs", ...] }, "progress": {total,complete,remaining}, "tasks": [{id,description,done}], "state": "blocked"|"all_done"|"ready", "missingArtifacts"?, "missingComprehension"?, "comprehension"?: { "required", "passed", "thresholdPercent", "bestScorePercent"?, "questionCount", "requirementCount", "scenarioCount", "attempts"? }, "instruction", "references"?, "root" }`.
+`{ "changeName", "changeDir", "schemaName", "contextFiles": { "<artifactId>": ["/abs", ...] }, "progress": {total,complete,remaining}, "tasks": [{id,description,done}], "state": "blocked"|"all_done"|"ready", "missingArtifacts"?, "missingComprehension"?, "comprehension"?: { "required", "passed", "thresholdPercent", "bestScorePercent"?, "questionCount", "requirementCount", "scenarioCount", "pendingTaskCount", "attempts"? }, "instruction", "references"?, "root" }`.
 
 When comprehension is required and not passed, `state` is `"blocked"` and `missingComprehension` is `true`.
 

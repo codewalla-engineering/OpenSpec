@@ -52,7 +52,7 @@ comprehension:
   max_questions: 10
 ```
 
-Set `comprehension.enabled: false` to skip the spec quiz gate on `/opsx:apply`.
+Set `comprehension.enabled: false` to skip the spec and task quiz gate on `/opsx:apply`.
 
 ### How It Works
 
