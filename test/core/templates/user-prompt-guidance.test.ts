@@ -9,7 +9,7 @@ import {
   PROMPT_SELECT_CHANGE,
   PROMPT_SELECT_CHANGE_RECENT,
 } from '../../../src/core/templates/workflows/user-prompt-guidance.js';
-import { COMPREHENSION_APPLY_GUARDRAIL } from '../../../src/core/templates/workflows/comprehension-guidance.js';
+import { COMPREHENSION_APPLY_GUARDRAIL, COMPREHENSION_QUIZ_GUIDANCE } from '../../../src/core/templates/workflows/comprehension-guidance.js';
 
 const ALL_PROMPTS = [
   PROMPT_SELECT_CHANGE,
@@ -53,5 +53,12 @@ describe('user-prompt-guidance', () => {
     expect(COMPREHENSION_APPLY_GUARDRAIL).toContain(
       'NEVER call `--record-comprehension-pass` until the user has answered every question'
     );
+  });
+
+  it('requires plan-heavy allocation and three options in comprehension guidance', () => {
+    expect(COMPREHENSION_QUIZ_GUIDANCE).toContain('contextFiles.plan');
+    expect(COMPREHENSION_QUIZ_GUIDANCE).toContain('questionAllocation');
+    expect(COMPREHENSION_QUIZ_GUIDANCE).toContain('**Plan**:');
+    expect(COMPREHENSION_QUIZ_GUIDANCE).toContain('3 options');
   });
 });

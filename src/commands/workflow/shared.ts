@@ -37,6 +37,8 @@ export interface ApplyComprehensionInfo {
   thresholdPercent: number;
   bestScorePercent?: number;
   questionCount: number;
+  questionAllocation: Record<string, number>;
+  optionsPerQuestion: number;
   requirementCount: number;
   scenarioCount: number;
   pendingTaskCount: number;

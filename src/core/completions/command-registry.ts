@@ -192,6 +192,25 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
         description: 'Schema override',
         takesValue: true,
       },
+      {
+        name: 'record-comprehension-pass',
+        description: 'Record a successful comprehension quiz pass (use with instructions apply)',
+      },
+      {
+        name: 'score',
+        description: 'Quiz score 0-100 (required with --record-comprehension-pass)',
+        takesValue: true,
+      },
+      {
+        name: 'attempt',
+        description: 'Quiz attempt number',
+        takesValue: true,
+      },
+      {
+        name: 'question-count',
+        description: 'Number of quiz questions taken',
+        takesValue: true,
+      },
       COMMON_FLAGS.json,
       COMMON_FLAGS.store,
     ],

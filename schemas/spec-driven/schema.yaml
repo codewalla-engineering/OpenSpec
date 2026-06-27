@@ -1,6 +1,6 @@
 name: spec-driven
 version: 1
-description: Default OpenSpec workflow - proposal → specs → design → tasks
+description: Default OpenSpec workflow - proposal → specs → design → plan → tasks
 artifacts:
   - id: proposal
     generates: proposal.md
@@ -24,7 +24,7 @@ artifacts:
       Keep it concise (1-2 pages). Focus on the "why" not the "how" -
       implementation details belong in design.md.
 
-      This is the foundation - specs, design, and tasks all build on this.
+      This is the foundation - specs, design, plan, and tasks all build on this.
     requires: []
 
   - id: specs
@@ -110,6 +110,26 @@ artifacts:
     requires:
       - proposal
 
+  - id: plan
+    generates: plan.md
+    description: File-level implementation plan with code map
+    template: plan.md
+    instruction: |
+      Create a concrete implementation plan from design and specs.
+
+      Sections:
+      - **Code map**: Files to create, modify, or delete
+      - **Implementation order**: Sequenced steps at file/module level
+      - **Test plan**: How to verify the change
+      - **Risks**: Known risks with mitigations ([Risk] → Mitigation)
+      - **Done definition**: Objective criteria for completion
+
+      Do NOT restate behavioral requirements — link to specs.
+      Do NOT duplicate design decisions — reference design.md.
+    requires:
+      - specs
+      - design
+
   - id: tasks
     generates: tasks.md
     description: Implementation checklist with trackable tasks
@@ -139,14 +159,17 @@ artifacts:
       - [ ] 2.2 Add CSV formatting utilities
       ```
 
-      Reference specs for what needs to be built, design for how to build it.
+      Derive tasks from plan.md code map. Reference specs for what to build,
+      design for architectural decisions, and plan for file-level targets.
+      Include file/module references where helpful.
       Each task should be verifiable - you know when it's done.
     requires:
       - specs
       - design
+      - plan
 
 apply:
-  requires: [tasks]
+  requires: [plan, tasks]
   tracks: tasks.md
   instruction: |
     Read context files, work through pending tasks, mark complete as you go.

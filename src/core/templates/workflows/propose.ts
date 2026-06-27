@@ -12,12 +12,13 @@ import { PROMPT_CLARIFY, PROMPT_OPEN_ENDED } from './user-prompt-guidance.js';
 export function getOpsxProposeSkillTemplate(): SkillTemplate {
   return {
     name: 'openspec-propose',
-    description: 'Propose a new change with all artifacts generated in one step. Use when the user wants to quickly describe what they want to build and get a complete proposal with design, specs, and tasks ready for implementation.',
+    description: 'Propose a new change with all artifacts generated in one step. Use when the user wants to quickly describe what they want to build and get a complete proposal with design, specs, plan, and tasks ready for implementation.',
     instructions: `Propose a new change - create the change and generate all artifacts in one step.
 
 I'll create a change with artifacts:
 - proposal.md (what & why)
 - design.md (how)
+- plan.md (file-level implementation plan)
 - tasks.md (implementation steps)
 
 When ready to implement, run /opsx:apply
@@ -134,6 +135,7 @@ export function getOpsxProposeCommandTemplate(): CommandTemplate {
 I'll create a change with artifacts:
 - proposal.md (what & why)
 - design.md (how)
+- plan.md (file-level implementation plan)
 - tasks.md (implementation steps)
 
 When ready to implement, run /opsx:apply

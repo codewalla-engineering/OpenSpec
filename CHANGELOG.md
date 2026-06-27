@@ -1,5 +1,15 @@
 # @codewalla_india/openspec
 
+## 1.0.5
+
+### Patch Changes
+
+- Add mandatory **`plan.md`** to the default spec-driven workflow (`proposal → specs → design → plan → tasks`). Apply requires both `plan.md` and `tasks.md`.
+- Comprehension quiz: plan-heavy **`questionAllocation`** in apply JSON, **3 options** per question, and fingerprint invalidation when `plan.md` changes.
+- fix(adapters): escape carriage returns in generated YAML frontmatter via shared `command-generation/yaml.ts`.
+
+**Breaking:** Existing changes with `tasks.md` but no `plan.md` are blocked until a plan is added.
+
 ## 1.4.1
 
 ### Patch Changes

@@ -73,7 +73,7 @@ ${COMPREHENSION_QUIZ_GUIDANCE}
 
    After comprehension is passed (or not required), read every file path listed under \`contextFiles\` from the apply instructions output.
    The files depend on the schema being used:
-   - **spec-driven**: proposal, specs, design, tasks
+   - **spec-driven**: proposal, specs, design, plan, tasks
    - Other schemas: follow the contextFiles from CLI output
 
 6. **Show current progress**
@@ -243,7 +243,7 @@ ${COMPREHENSION_QUIZ_GUIDANCE}
 
    After comprehension is passed (or not required), read every file path listed under \`contextFiles\` from the apply instructions output.
    The files depend on the schema being used:
-   - **spec-driven**: proposal, specs, design, tasks
+   - **spec-driven**: proposal, specs, design, plan, tasks
    - Other schemas: follow the contextFiles from CLI output
 
 6. **Show current progress**

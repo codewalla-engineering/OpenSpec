@@ -78,7 +78,7 @@ Every artifact is either already created or blocked waiting on a dependency. See
 openspec status --change <name>
 ```
 
-Then create the missing dependency first. Remember the order: proposal enables specs and design; specs and design together enable tasks.
+Then create the missing dependency first. Remember the order: proposal enables specs and design; specs and design together enable plan; plan enables tasks.
 
 ### `openspec validate` reports warnings or errors
 
@@ -117,7 +117,7 @@ Three usual suspects:
 
 ### "Unknown artifact ID in rules: X"
 
-A key under `rules:` doesn't match any artifact in your schema. For the default `spec-driven` schema the valid IDs are `proposal`, `specs`, `design`, `tasks`. To see the IDs for any schema:
+A key under `rules:` doesn't match any artifact in your schema. For the default `spec-driven` schema the valid IDs are `proposal`, `specs`, `design`, `plan`, `tasks`. To see the IDs for any schema:
 
 ```bash
 openspec schemas --json

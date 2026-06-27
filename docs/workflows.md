@@ -18,7 +18,7 @@ Traditional (phase-locked):
 
 OPSX (fluid actions):
 
-  proposal ──► specs ──► design ──► tasks ──► implement
+  proposal ──► specs ──► design ──► plan ──► tasks ──► implement
 ```
 
 **Key principles:**
@@ -249,7 +249,7 @@ Bulk archive detects when multiple changes touch the same specs and resolves con
 
 #### Comprehension quiz before apply
 
-By default, `/opsx:apply` runs a **multiple-choice comprehension quiz** on proposal, design, delta specs, and pending tasks before any implementation (5–10 questions, scaled to change size). Questions test holistic understanding—motivation, design decisions, requirements, and implementation approach—not task numbers or verbatim checkbox text. You need **≥ 80%** to proceed. The CLI blocks `openspec instructions apply` until a pass is recorded; failed attempts get new questions. **You** answer the quiz in chat—the agent presents one question at a time and waits; it must not answer for you.
+By default, `/opsx:apply` runs a **three-option multiple-choice comprehension quiz** on proposal, design, delta specs, plan, and pending tasks before any implementation (5–10 questions, scaled to change size). The CLI exposes `comprehension.questionAllocation` so **plan receives the majority** of questions when present. Questions test holistic understanding—motivation, design decisions, code map, requirements, and implementation approach—not task numbers or verbatim checkbox text. You need **≥ 80%** to proceed. The CLI blocks `openspec instructions apply` until a pass is recorded; failed attempts get new questions. Editing plan.md after a pass requires retaking the quiz. **You** answer the quiz in chat—the agent presents one question at a time and waits; it must not answer for you.
 
 Disable for a project in `openspec/config.yaml`:
 

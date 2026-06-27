@@ -42,7 +42,7 @@ describe('artifact-graph workflow integration', () => {
 
       // Verify schema structure
       expect(graph.getName()).toBe('spec-driven');
-      expect(graph.getAllArtifacts()).toHaveLength(4);
+      expect(graph.getAllArtifacts()).toHaveLength(5);
 
       // 2. Initial state - nothing complete, only proposal is ready
       let completed = detectCompleted(graph, tempDir);
@@ -52,7 +52,8 @@ describe('artifact-graph workflow integration', () => {
       expect(normalizeBlocked(graph.getBlocked(completed))).toEqual({
         specs: ['proposal'],
         design: ['proposal'],
-        tasks: ['design', 'specs'],
+        plan: ['design', 'specs'],
+        tasks: ['design', 'plan', 'specs'],
       });
 
       // 3. Create proposal.md - now specs and design become ready
@@ -61,31 +62,42 @@ describe('artifact-graph workflow integration', () => {
       expect(completed).toEqual(new Set(['proposal']));
       expect(graph.getNextArtifacts(completed).sort()).toEqual(['design', 'specs']);
       expect(normalizeBlocked(graph.getBlocked(completed))).toEqual({
-        tasks: ['design', 'specs'],
+        plan: ['design', 'specs'],
+        tasks: ['design', 'plan', 'specs'],
       });
 
-      // 4. Create design.md - specs still needed for tasks
+      // 4. Create design.md - specs still needed for plan
       fs.writeFileSync(path.join(tempDir, 'design.md'), '# Design\n\nTechnical design content.');
       completed = detectCompleted(graph, tempDir);
       expect(completed).toEqual(new Set(['proposal', 'design']));
       expect(graph.getNextArtifacts(completed)).toEqual(['specs']);
-      expect(graph.getBlocked(completed)).toEqual({
-        tasks: ['specs'],
+      expect(normalizeBlocked(graph.getBlocked(completed))).toEqual({
+        plan: ['specs'],
+        tasks: ['plan', 'specs'],
       });
 
-      // 5. Create specs directory with a spec file - tasks becomes ready
+      // 5. Create specs directory with a spec file - plan becomes ready
       const specsDir = path.join(tempDir, 'specs');
       fs.mkdirSync(specsDir, { recursive: true });
       fs.writeFileSync(path.join(specsDir, 'feature-auth.md'), '# Auth Spec\n\nAuthentication specification.');
       completed = detectCompleted(graph, tempDir);
       expect(completed).toEqual(new Set(['proposal', 'design', 'specs']));
+      expect(graph.getNextArtifacts(completed)).toEqual(['plan']);
+      expect(normalizeBlocked(graph.getBlocked(completed))).toEqual({
+        tasks: ['plan'],
+      });
+
+      // 6. Create plan.md - tasks becomes ready
+      fs.writeFileSync(path.join(tempDir, 'plan.md'), '# Plan\n\n## Code Map\n- src/auth.ts');
+      completed = detectCompleted(graph, tempDir);
+      expect(completed).toEqual(new Set(['proposal', 'design', 'specs', 'plan']));
       expect(graph.getNextArtifacts(completed)).toEqual(['tasks']);
       expect(graph.getBlocked(completed)).toEqual({});
 
-      // 6. Create tasks.md - workflow complete
+      // 7. Create tasks.md - workflow complete
       fs.writeFileSync(path.join(tempDir, 'tasks.md'), '# Tasks\n\n- [ ] Implement feature');
       completed = detectCompleted(graph, tempDir);
-      expect(completed).toEqual(new Set(['proposal', 'design', 'specs', 'tasks']));
+      expect(completed).toEqual(new Set(['proposal', 'design', 'specs', 'plan', 'tasks']));
       expect(graph.getNextArtifacts(completed)).toEqual([]);
       expect(graph.isComplete(completed)).toBe(true);
       expect(graph.getBlocked(completed)).toEqual({});

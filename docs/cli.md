@@ -710,7 +710,7 @@ openspec instructions [artifact] [options]
 
 | Argument | Required | Description |
 |----------|----------|-------------|
-| `artifact` | No | Artifact ID: `proposal`, `specs`, `design`, `tasks`, or `apply` |
+| `artifact` | No | Artifact ID: `proposal`, `specs`, `design`, `plan`, `tasks`, or `apply` |
 
 **Options:**
 
@@ -816,7 +816,7 @@ Available schemas:
 
   spec-driven (package)
     The default spec-driven development workflow
-    Flow: proposal → specs → design → tasks
+    Flow: proposal → specs → design → plan → tasks
 
   my-custom (project)
     Custom workflow for this project

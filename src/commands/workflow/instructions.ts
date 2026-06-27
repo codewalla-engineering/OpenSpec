@@ -39,6 +39,7 @@ import {
   checkComprehensionGate,
   ComprehensionPassError,
   recordComprehensionPass,
+  type ArtifactPresence,
 } from '../../core/comprehension/index.js';
 import {
   validateChangeExists,
@@ -69,6 +70,24 @@ export interface ApplyInstructionsOptions {
   score?: number;
   attempt?: number;
   questionCount?: number;
+}
+
+function buildArtifactPresence(contextFiles: Record<string, string[]>, pendingTaskCount: number): ArtifactPresence {
+  return {
+    hasPlan: (contextFiles.plan?.length ?? 0) > 0,
+    hasProposal: (contextFiles.proposal?.length ?? 0) > 0,
+    hasDesign: (contextFiles.design?.length ?? 0) > 0,
+    hasSpecs: (contextFiles.specs?.length ?? 0) > 0,
+    hasTasks: pendingTaskCount > 0 || (contextFiles.tasks?.length ?? 0) > 0,
+  };
+}
+
+function resolvePlanPath(contextFiles: Record<string, string[]>, changeDir: string): string | null {
+  if (contextFiles.plan?.[0]) {
+    return contextFiles.plan[0];
+  }
+  const fallback = path.join(changeDir, 'plan.md');
+  return fs.existsSync(fallback) ? fallback : null;
 }
 
 // -----------------------------------------------------------------------------
@@ -435,18 +454,20 @@ export async function generateApplyInstructions(
     const specPaths = contextFiles.specs ?? [];
     const tasksPath =
       tracksFile && tracksFileExists ? path.join(changeDir, tracksFile) : null;
+    const planPath = resolvePlanPath(contextFiles, changeDir);
     const pendingTaskCount = tasks.filter((task) => !task.done).length;
+    const artifactPresence = buildArtifactPresence(contextFiles, pendingTaskCount);
     const gate = checkComprehensionGate(
       changeDir,
       specPaths,
       options.projectConfig ?? readProjectConfig(projectRoot),
-      { tasksPath, pendingTaskCount }
+      { tasksPath, planPath, pendingTaskCount, artifactPresence }
     );
     if (gate.active && !gate.passed && gate.info) {
       state = 'blocked';
       missingComprehension = true;
       comprehension = gate.info;
-      instruction = `Complete the comprehension quiz in /opsx:apply before implementation (score ≥ ${gate.info.thresholdPercent}% on proposal, design, specs, and tasks).`;
+      instruction = `Complete the comprehension quiz in /opsx:apply before implementation (score ≥ ${gate.info.thresholdPercent}% on proposal, design, specs, plan, and tasks; plan receives the majority of questions per questionAllocation).`;
     } else if (gate.active && gate.info) {
       comprehension = gate.info;
     }
@@ -513,16 +534,34 @@ export async function applyInstructionsCommand(options: ApplyInstructionsOptions
       }
       const tracksFile = schema.apply?.tracks ?? null;
       const tasksPath = tracksFile ? path.join(changeDir, tracksFile) : null;
+      const planPath = fs.existsSync(path.join(changeDir, 'plan.md'))
+        ? path.join(changeDir, 'plan.md')
+        : null;
+      const pendingTaskCount =
+        tasksPath && fs.existsSync(tasksPath)
+          ? parseTasksFile(fs.readFileSync(tasksPath, 'utf-8')).filter((t) => !t.done).length
+          : 0;
+      const contextFilesForPresence: Record<string, string[]> = {};
+      for (const artifact of schema.artifacts) {
+        const outputs = resolveArtifactOutputs(changeDir, artifact.generates);
+        if (outputs.length > 0) {
+          contextFilesForPresence[artifact.id] = outputs;
+        }
+      }
+      const artifactPresence = buildArtifactPresence(contextFilesForPresence, pendingTaskCount);
 
       try {
         const record = recordComprehensionPass({
           changeDir,
           specPaths,
           tasksPath,
+          planPath,
           projectConfig,
           scorePercent: options.score,
           attempt: options.attempt ?? 1,
           questionCount: options.questionCount ?? 0,
+          pendingTaskCount,
+          artifactPresence,
         });
 
         spinner?.stop();
@@ -642,14 +681,20 @@ export function printApplyInstructionsText(instructions: ApplyInstructions): voi
     console.log('### ⚠️ Comprehension Required');
     console.log();
     console.log(
-      `Pass the spec and task comprehension quiz (score ≥ ${comprehension.thresholdPercent}%) before implementation.`
+      `Pass the comprehension quiz (score ≥ ${comprehension.thresholdPercent}%) before implementation.`
     );
-    console.log(`Questions: ${comprehension.questionCount}`);
+    console.log(`Questions: ${comprehension.questionCount} (${comprehension.optionsPerQuestion} options each)`);
+    const allocationParts = Object.entries(comprehension.questionAllocation)
+      .filter(([, count]) => (count ?? 0) > 0)
+      .map(([category, count]) => `${category}×${count}`);
+    if (allocationParts.length > 0) {
+      console.log(`Allocation: ${allocationParts.join(', ')}`);
+    }
     console.log(
       `Specs: ${comprehension.requirementCount} requirements, ${comprehension.scenarioCount} scenarios; Tasks: ${comprehension.pendingTaskCount} pending`
     );
     if (comprehension.bestScorePercent !== undefined) {
-      console.log(`Previous score: ${comprehension.bestScorePercent}% (specs changed — retake required)`);
+      console.log(`Previous score: ${comprehension.bestScorePercent}% (artifacts changed — retake required)`);
     }
     console.log('Complete the quiz via /opsx:apply.');
     console.log();

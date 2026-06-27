@@ -56,7 +56,7 @@ I'll walk you through a complete change cycle—from idea to implementation—us
 1. Pick a small, real task in your codebase
 2. Explore the problem briefly
 3. Create a change (the container for our work)
-4. Build the artifacts: proposal → specs → design → tasks
+4. Build the artifacts: proposal → specs → design → plan → tasks
 5. Implement the tasks
 6. Archive the completed change
 
@@ -179,7 +179,7 @@ Now let's create a change to hold our work.
 \`\`\`
 ## Creating a Change
 
-A "change" in OpenSpec is a container for all the thinking and planning around a piece of work. It lives at the \`changeRoot\` reported by \`openspec status --change "<name>" --json\` and holds your artifacts—proposal, specs, design, tasks.
+A "change" in OpenSpec is a container for all the thinking and planning around a piece of work. It lives at the \`changeRoot\` reported by \`openspec status --change "<name>" --json\` and holds your artifacts—proposal, specs, design, plan, tasks.
 
 Let me create one for our task.
 \`\`\`

@@ -1,25 +1,45 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 
+export interface ApplyArtifactFingerprintInput {
+  specPaths: string[];
+  tasksPath?: string | null;
+  planPath?: string | null;
+}
+
+function hashFileContent(
+  hash: ReturnType<typeof createHash>,
+  label: string,
+  filePath: string
+): void {
+  hash.update(`${label}:`);
+  hash.update(filePath);
+  hash.update('\0');
+  hash.update(readFileSync(filePath, 'utf-8'));
+  hash.update('\0');
+}
+
 /**
- * SHA-256 fingerprint of delta spec and optional tasks file contents.
+ * SHA-256 fingerprint of delta specs and optional plan/tasks file contents.
  */
-export function fingerprintSpecFiles(specPaths: string[], tasksPath?: string | null): string {
-  const sorted = [...specPaths].sort();
+export function fingerprintApplyArtifacts(input: ApplyArtifactFingerprintInput): string {
+  const sorted = [...input.specPaths].sort();
   const hash = createHash('sha256');
   for (const specPath of sorted) {
-    hash.update('spec:');
-    hash.update(specPath);
-    hash.update('\0');
-    hash.update(readFileSync(specPath, 'utf-8'));
-    hash.update('\0');
+    hashFileContent(hash, 'spec', specPath);
   }
-  if (tasksPath && existsSync(tasksPath)) {
-    hash.update('tasks:');
-    hash.update(tasksPath);
-    hash.update('\0');
-    hash.update(readFileSync(tasksPath, 'utf-8'));
-    hash.update('\0');
+  if (input.planPath && existsSync(input.planPath)) {
+    hashFileContent(hash, 'plan', input.planPath);
+  }
+  if (input.tasksPath && existsSync(input.tasksPath)) {
+    hashFileContent(hash, 'tasks', input.tasksPath);
   }
   return hash.digest('hex');
+}
+
+/**
+ * @deprecated Use fingerprintApplyArtifacts
+ */
+export function fingerprintSpecFiles(specPaths: string[], tasksPath?: string | null): string {
+  return fingerprintApplyArtifacts({ specPaths, tasksPath });
 }

@@ -220,7 +220,7 @@ Artifacts are the documents within a change that guide the work.
 ### The Artifact Flow
 
 ```
-proposal ──────► specs ──────► design ──────► tasks ──────► implement
+proposal ──────► specs ──────► design ──────► plan ──────► tasks ──────► implement
     │               │             │              │
    why            what           how          steps
  + scope        changes       approach      to take
@@ -312,6 +312,31 @@ CSS Variables (applied to :root)
 - Implementation reveals the approach won't work
 - Better solution discovered
 - Dependencies or constraints change
+
+#### Plan (`plan.md`)
+
+The plan captures the **file-level implementation map** — which files to touch, in what order, and how to verify.
+
+```markdown
+## Code Map
+- `src/contexts/ThemeContext.tsx` (new)
+- `src/components/ThemeToggle.tsx` (new)
+- `src/styles/globals.css` (modified)
+
+## Implementation Order
+1. Add ThemeContext and CSS variables
+2. Wire ThemeToggle into settings
+
+## Test Plan
+- Manual: toggle theme, verify persistence across reload
+
+## Done Definition
+- All tasks checked; contrast ratios pass accessibility check
+```
+
+**When to update the plan:**
+- Codebase exploration reveals different file targets
+- Implementation order changes based on dependencies discovered during apply
 
 #### Tasks (`tasks.md`)
 
@@ -461,7 +486,7 @@ artifacts:
 The standard workflow for spec-driven development:
 
 ```
-proposal → specs → design → tasks → implement
+proposal → specs → design → plan → tasks → implement
 ```
 
 Best for: Most feature work where you want to agree on specs before implementation.

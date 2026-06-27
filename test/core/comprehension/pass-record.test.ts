@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
   buildPassRecord,
+  fingerprintApplyArtifacts,
   fingerprintSpecFiles,
   isPassValid,
   readPassRecord,
@@ -81,11 +82,35 @@ describe('comprehension pass record', () => {
     expect(isPassValid(readPassRecord(dir), newFp)).toBe(false);
   });
 
+  it('invalidates pass when plan content changes', async () => {
+    const planPath = join(dir, 'plan.md');
+    await writeFile(planPath, '## Code Map\n- src/a.ts\n');
+    const fp = fingerprintApplyArtifacts({ specPaths: [specPath], planPath });
+    const record = buildPassRecord({
+      scorePercent: 90,
+      thresholdPercent: 80,
+      attempt: 1,
+      questionCount: 5,
+      specFingerprint: fp,
+    });
+    writePassRecord(dir, record);
+
+    expect(isPassValid(readPassRecord(dir), fp)).toBe(true);
+
+    await writeFile(planPath, '## Code Map\n- src/b.ts\n');
+    const newFp = fingerprintApplyArtifacts({ specPaths: [specPath], planPath });
+    expect(isPassValid(readPassRecord(dir), newFp)).toBe(false);
+  });
+
   it('checkComprehensionGate blocks without pass', () => {
-    const gate = checkComprehensionGate(dir, [specPath], null);
+    const gate = checkComprehensionGate(dir, [specPath], null, {
+      artifactPresence: { hasPlan: true, hasSpecs: true },
+    });
     expect(gate.active).toBe(true);
     expect(gate.passed).toBe(false);
     expect(gate.info?.questionCount).toBeGreaterThanOrEqual(5);
+    expect(gate.info?.optionsPerQuestion).toBe(3);
+    expect(gate.info?.questionAllocation.plan).toBeGreaterThan(0);
   });
 
   it('checkComprehensionGate passes after valid record', () => {

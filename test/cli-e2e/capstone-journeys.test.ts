@@ -159,7 +159,7 @@ describe('capstone persona journeys (6.1)', () => {
 
     // Everything written landed inside the store's change dir.
     const writtenArtifacts = fs.readdirSync(changeDir).sort();
-    expect(writtenArtifacts).toEqual(['.openspec.yaml', 'design.md', 'proposal.md', 'specs', 'tasks.md']);
+    expect(writtenArtifacts).toEqual(['.openspec.yaml', 'design.md', 'plan.md', 'proposal.md', 'specs', 'tasks.md']);
 
     // Archive completes the lifecycle, still without --store.
     const archived = await runCLI(

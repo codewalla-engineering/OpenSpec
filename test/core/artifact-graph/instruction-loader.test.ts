@@ -572,6 +572,7 @@ rules:
       fs.writeFileSync(path.join(changeDir, 'proposal.md'), '# Proposal');
       fs.writeFileSync(path.join(changeDir, 'specs', 'test.md'), '# Spec');
       fs.writeFileSync(path.join(changeDir, 'design.md'), '# Design');
+      fs.writeFileSync(path.join(changeDir, 'plan.md'), '# Plan');
       fs.writeFileSync(path.join(changeDir, 'tasks.md'), '# Tasks');
 
       const context = loadChangeContext(tempDir, 'my-change');
@@ -585,11 +586,12 @@ rules:
       const context = loadChangeContext(tempDir, 'my-change');
       const status = formatChangeStatus(context);
 
-      // tasks requires specs and design
+      // tasks requires specs, design, and plan
       const tasks = status.artifacts.find(a => a.id === 'tasks');
       expect(tasks?.status).toBe('blocked');
       expect(tasks?.missingDeps).toContain('specs');
       expect(tasks?.missingDeps).toContain('design');
+      expect(tasks?.missingDeps).toContain('plan');
     });
 
     it('should sort artifacts in build order', () => {

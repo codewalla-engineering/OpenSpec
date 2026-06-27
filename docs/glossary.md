@@ -30,7 +30,9 @@ Terms are grouped by topic, then alphabetized within each group.
 
 **Proposal (`proposal.md`).** The *why* and *what* of a change: its intent, scope, and high-level approach. The first artifact you create.
 
-**Design (`design.md`).** The *how*: technical approach, architecture decisions, and the files you expect to touch. Optional for simple changes.
+**Design (`design.md`).** The *how*: technical approach, architecture decisions, and trade-offs. Optional for simple changes.
+
+**Plan (`plan.md`).** The *where*: file-level code map, implementation order, test plan, risks, and done definition. Mandatory in the default spec-driven workflow before tasks and apply.
 
 **Tasks (`tasks.md`).** The implementation checklist, with checkboxes. The AI works through it during `/opsx:apply` and checks items off as it goes.
 
@@ -60,7 +62,7 @@ Terms are grouped by topic, then alphabetized within each group.
 
 ## Customization
 
-**Schema.** The definition of which artifacts a workflow has and how they depend on one another. The built-in default is `spec-driven` (proposal → specs → design → tasks). You can fork it or write your own. See [Customization](customization.md#custom-schemas).
+**Schema.** The definition of which artifacts a workflow has and how they depend on one another. The built-in default is `spec-driven` (proposal → specs → design → plan → tasks). You can fork it or write your own. See [Customization](customization.md#custom-schemas).
 
 **Template.** A Markdown file inside a schema that shapes what the AI generates for a given artifact. Editing a template changes the AI's output immediately, with no rebuild.
 

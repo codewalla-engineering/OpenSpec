@@ -52,7 +52,7 @@ comprehension:
   max_questions: 10
 ```
 
-Set `comprehension.enabled: false` to skip the proposal/design/spec/task quiz gate on `/opsx:apply`.
+Set `comprehension.enabled: false` to skip the proposal/design/spec/plan/task quiz gate on `/opsx:apply`.
 
 ### How It Works
 
