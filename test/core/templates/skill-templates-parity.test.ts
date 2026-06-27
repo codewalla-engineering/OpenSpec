@@ -36,17 +36,17 @@ import { STORE_SELECTION_GUIDANCE } from '../../../src/core/templates/workflows/
 
 const EXPECTED_FUNCTION_HASHES: Record<string, string> = {
   getExploreSkillTemplate: '7d2f54e74fffcb36aaaa4498a4a8b033142bb25945fb9b2de532354acbe76b9c',
-  getNewChangeSkillTemplate: '652ae41351a285dc42268e1085d65617cd4920a86e6ef1d63c2067533a67ada6',
+  getNewChangeSkillTemplate: '324c8cd7428531bcf2f56f1ab4fbcb747ae3d6ecd0128c2fc042b4d09d82a03e',
   getContinueChangeSkillTemplate: '8b9af7072a6dae6ff8e086e91147f03b4bed998061e0d7621897cc76a2812317',
-  getApplyChangeSkillTemplate: '334bfb02c342b7cbfb6ccf0778644d5425146d688f586e4f3d654befa3ec57a2',
-  getFfChangeSkillTemplate: '5bfbbcf963f0230b74e324696c15856a27e1f8abcdaadc7e5980ec5ab7cb4d18',
+  getApplyChangeSkillTemplate: '8735fe7ed9438a53fceb0cb5247c2e7af12501bc22de75573ccdbd52c94f2dad',
+  getFfChangeSkillTemplate: '8587acd740f43a44d6d3251d86bf4fa6cfef43c507dca606913bab3a3154c0ba',
   getSyncSpecsSkillTemplate: '658644cbd7dbf472ae4aae6199ef4ecbcf59db63a327dd294fdfd4fe0e4c2811',
   getOnboardSkillTemplate: '3c05ab49c86e131a8acf8a05beaf9fb776d6797f697aaf61a04e29be4918f5bd',
   getOpsxExploreCommandTemplate: '37e53590aae7ac6621d4393aa80a5b8af21881323887fa924ed329199fda27e0',
-  getOpsxNewCommandTemplate: '9c89c45de5144557599ae6dfef6cb8a579f538e72191c76bd66f0372b79b6fb5',
+  getOpsxNewCommandTemplate: '5766e8f6a2e4513a328c58f38cb2aeb77a32a034d164ad83115c1a33197c36c9',
   getOpsxContinueCommandTemplate: '43c8d58aa0fc13bd6d10d2863f97757d7123f475559ade17b33866db6eab505e',
-  getOpsxApplyCommandTemplate: '3c929b4d917101e006213fa23c67b8e2b9bacf4a901f7ed10bed5197848ca9eb',
-  getOpsxFfCommandTemplate: '83ce9c22d737e8ef1300d1ddc06d6cb5bba0a2739d01e7768d50ab7e1375cdd6',
+  getOpsxApplyCommandTemplate: 'e312aa82fe154162b691a22e369e53c17b442eb9bce02a7b82661708012992a1',
+  getOpsxFfCommandTemplate: '2fd3d84150969bd81b8a1af193bf5f0bbac991c8ed52864da0e0ced3fe6d0a71',
   getArchiveChangeSkillTemplate: '62e27b8053394a6b1f40d6741caeb738794c295bd60b3ed14ef1358d5ce3c4d2',
   getBulkArchiveChangeSkillTemplate: '49e0f2f2ec6c72318243a665de20356da652bb5fdbede3df362ecf7321c346c0',
   getOpsxSyncCommandTemplate: '0229bf73efe28aa47339960c7191e9c85460fa0e3498ecaaf22d619aa1bb64f7',
@@ -55,23 +55,23 @@ const EXPECTED_FUNCTION_HASHES: Record<string, string> = {
   getOpsxOnboardCommandTemplate: '88e1192a56610c6b4f84a26ef4afb4603d690232cf52dfd74e4e660b45253572',
   getOpsxBulkArchiveCommandTemplate: 'c8d8feca59e1d1d929b7051fd134ee9643baf7adf4e619b2513cba0f3814cba7',
   getOpsxVerifyCommandTemplate: 'eef9d8aa74ea9a294e0e0d1602728d1f35a8e3e7a539a3691feac4d2f460703a',
-  getOpsxProposeSkillTemplate: 'aa0dc798da9af706c8d09cb0d9613e4726f931186401cc88457cb4a4af8bbbc1',
-  getOpsxProposeCommandTemplate: 'ca849a132693715518cbda9582f0deff37beef2f476a64773fb0e30df779c8e4',
+  getOpsxProposeSkillTemplate: '9844b8b0ecced3d482665f53e7dff28654205c5e11b9dad1c7970d85ba5c8372',
+  getOpsxProposeCommandTemplate: '3fff9ca5176201da7d3cb4443e7fa95dda4c45447686dfcc223880dbe7b44d3e',
   getFeedbackSkillTemplate: 'd7d83c5f7fc2b92fe8f4588a5bf2d9cb315e4c73ec19bcd5ef28270906319a0d',
 };
 
 const EXPECTED_GENERATED_SKILL_CONTENT_HASHES: Record<string, string> = {
   'openspec-explore': '08f905865f86e787262fed252c59ed343ac24db8befa31e5cf8fd99af947263b',
-  'openspec-new-change': '3a4b7271f5b527de1f54e57a57ffe79e385ec491750d3601d82e88d11be83563',
+  'openspec-new-change': '5f698cee03e982e9815fe2dff58ca944e40f57f37f7bf38bbcefda1eb3e1df3b',
   'openspec-continue-change': 'fbd3721d18a5a3a06e904e04a54d31f4c956e324f2d034167767f04c3b4cb4d2',
-  'openspec-apply-change': '8084b90f13eff4aa7505f5f25dc3a0324913846c933b39e3e403ea4a39fff4df',
-  'openspec-ff-change': '67d4000680f670c69afa0b8337192e7a5044a0bb0438e6563b4155df13ccb806',
+  'openspec-apply-change': '88e07329c8fd07459e94c6a834fa5669e758b15806bad2a8b4e66cdee40ea0f2',
+  'openspec-ff-change': '9162409d55571a22c6209d0fe49fcc8c79061da085e8e14db2c6483f8eebc7ad',
   'openspec-sync-specs': 'bde3292f51d96c414205a3207f2ec6297cb425d66974ffe5664034bd448c2de8',
   'openspec-archive-change': '40ce5c267e9ffd8f522f3c8599416e72dac2cdcafff216d6897b7a134d7195b0',
   'openspec-bulk-archive-change': '29a29c62c4bd477d896deee8e848fd7a97e971bafbe24339b65e3d30ea049f13',
   'openspec-verify-change': 'a0783a833b7aff504d14b52045bb407a5343499ee0b73ad96d5988c70a67c32e',
   'openspec-onboard': 'b9b5445e4afa96e88dd5568858e259293c7758fd6202fd898aa27598593caffa',
-  'openspec-propose': '7ebac46010e7fb9c07ff84c92df0866dbbe2626e93b09d26c60d3f9286002888',
+  'openspec-propose': '870701f67ee2fdf560cc9ab451b07545ccb72f71a4fa02224975360051ac30c5',
 };
 
 // Intentionally excludes getFeedbackSkillTemplate: this list only models templates

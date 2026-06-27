@@ -1,5 +1,24 @@
 # @codewalla_india/openspec
 
+## 1.1.0
+
+### Minor Changes
+
+- ### New Features
+
+  - **Identified telemetry** — Usage analytics now use your email or username as the PostHog distinct ID. Identity is collected during interactive `openspec init` or `openspec update` and stored at `~/.config/openspec/telemetry-identity.json` (mode 0600, never committed).
+  - **Workflow funnel tracking** — Correlated events (`workflow_started`, `change_proposal_ready`, `apply_ready`, `change_archived`) measure change lifecycle completion, including optional `--workflow-input`, `--editor`, and comprehension gate outcomes.
+  - **Expanded CLI instrumentation** — Store setup/register/remove, workset create/open/remove, validation, config changes, and feedback submission now emit dedicated PostHog events.
+
+  ### Breaking Changes
+
+  - **Identity required** — All commands except `init` and `update` exit with `telemetry_identity_required` when no identity is configured. CI runners must pre-provision `~/.config/openspec/telemetry-identity.json` or set `OPENSPEC_TELEMETRY_USER`.
+  - **Anonymous opt-out removed** — `OPENSPEC_TELEMETRY=0`, `DO_NOT_TRACK=1`, and CI auto-disable no longer skip telemetry; identity gating replaces the previous anonymous model.
+
+  ### Other
+
+  - PostHog client reads `POSTHOG_API_KEY` and `POSTHOG_HOST` from the environment; events send immediately with `$ip: null` and exclude file paths, artifact content, and stack traces.
+
 ## 1.0.6
 
 ### Patch Changes

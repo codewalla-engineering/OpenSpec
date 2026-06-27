@@ -42,6 +42,14 @@ import {
   type ArtifactPresence,
 } from '../../core/comprehension/index.js';
 import {
+  trackEvent,
+  maybeEmitProposalReady,
+  maybeEmitApplyReady,
+  trackArtifactInstructions,
+  trackArtifactContentChanges,
+  trackComprehensionRetakeRequired,
+} from '../../telemetry/index.js';
+import {
   validateChangeExists,
   validateSchemaExists,
   type TaskItem,
@@ -182,6 +190,27 @@ export async function instructionsCommand(
       references,
     });
     const isBlocked = instructions.dependencies.some((d) => !d.done);
+
+    const artifactOutputs = resolveArtifactOutputs(context.changeDir, artifact.generates);
+    await trackArtifactInstructions({
+      changeDir: context.changeDir,
+      changeName,
+      artifactId,
+      artifactWasDone: artifactOutputs.length > 0,
+    });
+
+    const contextFiles: Record<string, string[]> = {};
+    for (const a of context.graph.getAllArtifacts()) {
+      const outputs = resolveArtifactOutputs(context.changeDir, a.generates);
+      if (outputs.length > 0) {
+        contextFiles[a.id] = outputs;
+      }
+    }
+    await trackArtifactContentChanges({
+      changeDir: context.changeDir,
+      changeName,
+      contextFiles,
+    });
 
     spinner?.stop();
 
@@ -450,6 +479,15 @@ export async function generateApplyInstructions(
   let missingComprehension: boolean | undefined;
   let comprehension: ApplyInstructions['comprehension'];
 
+  await trackArtifactContentChanges({ changeDir, changeName, contextFiles });
+  await maybeEmitProposalReady({
+    changeDir,
+    changeName,
+    schema: context.schemaName,
+    missingArtifacts,
+    artifactCount: schema.artifacts.length,
+  });
+
   if (state === 'ready') {
     const specPaths = contextFiles.specs ?? [];
     const tasksPath =
@@ -470,6 +508,21 @@ export async function generateApplyInstructions(
       instruction = `Complete the comprehension quiz in /opsx:apply before implementation (score ≥ ${gate.info.thresholdPercent}% on proposal, design, specs, plan, and tasks; plan receives the majority of questions per questionAllocation).`;
     } else if (gate.active && gate.info) {
       comprehension = gate.info;
+    }
+
+    await maybeEmitApplyReady({ changeDir, changeName, state });
+
+    if (gate.active && gate.info) {
+      await trackEvent('comprehension_gate_checked', {
+        change_name: changeName,
+        required: true,
+        passed: gate.passed,
+        threshold_percent: gate.info.thresholdPercent,
+        question_count: gate.info.questionCount,
+      });
+      if (!gate.passed && gate.info.bestScorePercent !== undefined) {
+        await trackComprehensionRetakeRequired(changeName);
+      }
     }
   }
 
@@ -564,6 +617,13 @@ export async function applyInstructionsCommand(options: ApplyInstructionsOptions
           artifactPresence,
         });
 
+        await trackEvent('comprehension_pass_recorded', {
+          change_name: changeName,
+          score_percent: record.score_percent,
+          attempt: record.attempt,
+          question_count: options.questionCount ?? 0,
+        });
+
         spinner?.stop();
 
         if (options.json) {
@@ -598,6 +658,11 @@ export async function applyInstructionsCommand(options: ApplyInstructionsOptions
       } catch (error) {
         spinner?.stop();
         if (error instanceof ComprehensionPassError) {
+          await trackEvent('comprehension_pass_failed', {
+            change_name: changeName,
+            score_percent: options.score,
+            attempt: options.attempt ?? 1,
+          });
           if (options.json) {
             console.log(
               JSON.stringify(

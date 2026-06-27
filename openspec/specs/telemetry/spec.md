@@ -2,121 +2,89 @@
 
 ## Purpose
 
-This spec defines how OpenSpec collects anonymous usage telemetry to help improve the tool. It governs the `src/telemetry/` module, which handles PostHog integration, privacy-preserving event design, user opt-out mechanisms, and first-run notice display. The spec ensures telemetry is minimal, transparent, and respects user privacy.
+This spec defines how Codewalla OpenSpec collects mandatory usage telemetry to understand workflow adoption and completion. It governs the `src/telemetry/` module: PostHog integration, identified-user event design, workflow funnel metrics, and identity gating. Telemetry identity is required for all commands except bootstrap; there is no opt-out.
 
 ## Requirements
 
 ### Requirement: Command execution tracking
-The system SHALL send a `command_executed` event to PostHog when any CLI command executes, including only the command name and OpenSpec version as properties.
+The system SHALL send a `command_executed` event to PostHog when any CLI command executes with a configured identity, including the command name and OpenSpec version as properties.
 
 #### Scenario: Standard command execution
-- **WHEN** a user runs any openspec command
+- **WHEN** a user runs any openspec command with a configured identity
 - **THEN** the system sends a `command_executed` event with `command` and `version` properties
 
 #### Scenario: Subcommand execution
 - **WHEN** a user runs a nested command like `openspec change apply`
 - **THEN** the system sends a `command_executed` event with the full command path (e.g., `change:apply`)
 
-### Requirement: Privacy-preserving event design
-The system SHALL NOT include command arguments, file paths, project names, spec content, error messages, or IP addresses in telemetry events.
+### Requirement: Identified user telemetry
+The system SHALL use a human-readable email or username as the PostHog `distinct_id`. The system SHALL NOT generate or use anonymous UUIDs.
 
-#### Scenario: Command with arguments
-- **WHEN** a user runs `openspec init my-project --force`
-- **THEN** the telemetry event contains only `command: "init"` and `version: "<version>"` without arguments
+#### Scenario: Identity collected during init
+- **WHEN** a user runs `openspec init` interactively without a stored identity
+- **THEN** the system prompts for email or username, persists it to `~/.config/openspec/telemetry-identity.json` (mode 0600), and uses it as `distinct_id`
+
+#### Scenario: Identity collected during update
+- **WHEN** a user runs `openspec update` interactively without a stored identity
+- **THEN** the system prompts for email or username, persists it to `~/.config/openspec/telemetry-identity.json` (mode 0600), and uses it as `distinct_id`
+
+#### Scenario: CI and non-interactive bootstrap
+- **WHEN** `openspec init` or `openspec update` runs in a non-interactive environment
+- **AND** `OPENSPEC_TELEMETRY_USER` is set or a pre-provisioned identity file exists
+- **THEN** the system uses that identity without prompting
+
+#### Scenario: Non-bootstrap command without identity
+- **WHEN** a user runs any command other than `init` or `update` without a stored identity
+- **THEN** the CLI exits with non-zero status and error code `telemetry_identity_required` before the command body executes
+
+#### Scenario: Non-interactive bootstrap without identity
+- **WHEN** `openspec init` or `openspec update` runs non-interactively without a stored identity
+- **THEN** the CLI exits with non-zero status and error code `telemetry_identity_required`
+
+### Requirement: Internal workflow input telemetry
+The system SHALL capture user workflow intent on `workflow_started` when provided via `openspec new change` flags. Workflow events MAY include `workflow_input`, `description`, `goal`, `editor`, `change_name`, capability names, and aggregate counts.
+
+The system SHALL NOT include file paths, artifact or spec body content, error stack traces, or IP addresses in telemetry events.
+
+#### Scenario: Workflow input on funnel start
+- **WHEN** `openspec new change` succeeds with `--workflow-input` or `--workflow-input-file`
+- **THEN** the system emits `workflow_started` with `workflow_input` and persists it in the change-local marker file
+
+#### Scenario: Editor dimension
+- **WHEN** `openspec new change` succeeds with `--editor cursor`, `--editor windsurf`, or `--editor claude`
+- **THEN** the system emits `workflow_started` with `editor` and persists it in the marker file
+
+#### Scenario: Workflow input on archive
+- **WHEN** a change is archived successfully and the marker contains `workflow_input` or `editor`
+- **THEN** the system emits `change_archived` including those fields from the marker
 
 #### Scenario: IP address exclusion
 - **WHEN** the system sends a telemetry event
 - **THEN** the event explicitly sets `$ip: null` to prevent IP tracking
 
-### Requirement: Environment variable opt-out
-The system SHALL disable telemetry when `OPENSPEC_TELEMETRY=0` or `DO_NOT_TRACK=1` environment variables are set.
+### Requirement: Workflow funnel tracking
+The system SHALL emit correlated workflow events per change: `workflow_started`, `change_proposal_ready`, `apply_ready`, and `change_archived`, linked by `change_name` and user identity.
 
-#### Scenario: OPENSPEC_TELEMETRY opt-out
-- **WHEN** `OPENSPEC_TELEMETRY=0` is set in the environment
-- **THEN** the system sends no telemetry events
+#### Scenario: Funnel start
+- **WHEN** `openspec new change` succeeds
+- **THEN** the system emits `workflow_started` with `entry_point` and writes a change-local marker file
 
-#### Scenario: DO_NOT_TRACK opt-out
-- **WHEN** `DO_NOT_TRACK=1` is set in the environment
-- **THEN** the system sends no telemetry events
+#### Scenario: Funnel end
+- **WHEN** a change is archived successfully
+- **THEN** the system emits `change_archived` with `duration_since_start_ms` and revision aggregates
 
-#### Scenario: Environment variable takes precedence
-- **WHEN** the user has previously used the CLI (config exists)
-- **AND** the user sets `OPENSPEC_TELEMETRY=0`
-- **THEN** telemetry is disabled regardless of config state
-
-### Requirement: CI environment auto-disable
-The system SHALL automatically disable telemetry when `CI=true` environment variable is detected.
-
-#### Scenario: CI environment detection
-- **WHEN** `CI=true` is set in the environment
-- **THEN** the system sends no telemetry events
-
-#### Scenario: CI with explicit enable
-- **WHEN** `CI=true` is set
-- **AND** `OPENSPEC_TELEMETRY=1` is explicitly set
-- **THEN** telemetry remains disabled (CI takes precedence for privacy)
-
-### Requirement: First-run telemetry notice
-The system SHALL display a one-line telemetry disclosure notice on the first command execution, before any telemetry is sent.
-
-#### Scenario: First command execution
-- **WHEN** a user runs their first openspec command
-- **AND** telemetry is enabled
-- **THEN** the system displays: "Note: OpenSpec collects anonymous usage stats. Opt out: OPENSPEC_TELEMETRY=0"
-
-#### Scenario: Subsequent command execution
-- **WHEN** a user has already seen the notice (noticeSeen: true in config)
-- **THEN** the system does not display the notice
-
-#### Scenario: Notice before telemetry
-- **WHEN** displaying the first-run notice
-- **THEN** the notice appears before any telemetry event is sent
-
-### Requirement: Anonymous user identification
-The system SHALL generate a random UUID as an anonymous identifier on first telemetry send, stored in global config.
-
-#### Scenario: First telemetry event
-- **WHEN** the first telemetry event is sent
-- **AND** no anonymousId exists in config
-- **THEN** the system generates a random UUID v4 and stores it in config
-
-#### Scenario: Persistent identity
-- **WHEN** a user runs multiple commands across sessions
-- **THEN** the same anonymousId is used for all events
-
-#### Scenario: Lazy generation with opt-out
-- **WHEN** a user opts out before running any command
-- **THEN** no anonymousId is ever generated or stored
+### Requirement: Comprehension events
+The system SHALL emit comprehension-related events when the apply gate is checked, a pass is recorded, or a pass fails.
 
 ### Requirement: Immediate event sending
 The system SHALL send telemetry events immediately without batching, using `flushAt: 1` and `flushInterval: 0` configuration.
 
-#### Scenario: Event transmission timing
-- **WHEN** a command executes
-- **THEN** the telemetry event is sent immediately, not queued for batch transmission
-
 ### Requirement: Graceful shutdown
 The system SHALL call `posthog.shutdown()` before CLI exit to ensure pending events are flushed.
 
-#### Scenario: Normal exit
-- **WHEN** a command completes successfully
-- **THEN** the system awaits `shutdown()` before exiting
-
-#### Scenario: Error exit
-- **WHEN** a command fails with an error
-- **THEN** the system still awaits `shutdown()` before exiting
-
 ### Requirement: Silent failure handling
-The system SHALL silently ignore telemetry failures without affecting CLI functionality.
+The system SHALL silently ignore telemetry network failures without affecting CLI functionality after identity is established.
 
 #### Scenario: Network failure
 - **WHEN** the telemetry request fails due to network error
 - **THEN** the CLI command completes normally without error message
-
-#### Scenario: PostHog outage
-- **WHEN** PostHog service is unavailable
-- **THEN** the CLI command completes normally without error message
-
-#### Scenario: Shutdown failure
-- **WHEN** `shutdown()` fails or times out
-- **THEN** the CLI exits normally without error message

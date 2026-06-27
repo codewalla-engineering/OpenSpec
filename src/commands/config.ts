@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 import { spawn, execSync } from 'node:child_process';
+import { trackEvent } from '../telemetry/index.js';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
@@ -322,6 +323,7 @@ export function registerConfigCommand(program: Command): void {
       // Apply changes and save
       setNestedValue(config, key, coercedValue);
       saveGlobalConfig(config as GlobalConfig);
+      trackEvent('config_value_set', { key });
 
       const displayValue =
         typeof coercedValue === 'string' ? `"${coercedValue}"` : String(coercedValue);
@@ -609,6 +611,12 @@ export function registerConfigCommand(program: Command): void {
         config.delivery = nextState.delivery;
         config.workflows = nextState.workflows;
         saveGlobalConfig(config);
+        trackEvent('config_profile_changed', {
+          profile: nextState.profile,
+          delivery: nextState.delivery,
+          workflow_count: nextState.workflows.length,
+          changes: diff.lines,
+        });
 
         // Check if inside an OpenSpec project
         const projectDir = process.cwd();

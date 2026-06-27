@@ -2,6 +2,7 @@ import * as os from 'node:os';
 import { asErrorMessage, emitFailure, printJson } from './shared-output.js';
 import * as path from 'node:path';
 import { Command } from 'commander';
+import { trackEvent, trackCommandFailed } from '../telemetry/index.js';
 
 import { COMMAND_REGISTRY } from '../core/completions/command-registry.js';
 
@@ -524,6 +525,11 @@ class StoreCommand {
       }
       const result = await setupPreparedStore(prepared, { initGit });
       const payload = toMutationOutput(result);
+      trackEvent('store_setup', {
+        git_initialized: result.git.initialized,
+        already_registered: result.registryCommit.alreadyRegistered,
+        has_remote: Boolean(options.remote),
+      });
 
       if (options.json) {
         printJson(payload);
@@ -532,6 +538,7 @@ class StoreCommand {
 
       printMutationHuman('Store ready', payload, result.remotes);
     } catch (error) {
+      await trackCommandFailed('store_setup', error);
       this.handleFailure(
         options.json,
         { store: null, registry: null, git: null, created_files: [], status: [] },
@@ -563,6 +570,10 @@ class StoreCommand {
       }
 
       const payload = toMutationOutput(result);
+      trackEvent('store_registered', {
+        already_registered: result.registryCommit.alreadyRegistered,
+        git_is_repository: result.git.isRepository,
+      });
 
       if (options.json) {
         printJson(payload);
@@ -571,6 +582,7 @@ class StoreCommand {
 
       printMutationHuman('Store registered', payload, result.remotes);
     } catch (error) {
+      await trackCommandFailed('store_register', error);
       this.handleFailure(
         options.json,
         { store: null, registry: null, git: null, created_files: [], status: [] },
@@ -602,7 +614,11 @@ class StoreCommand {
     try {
       const target = await prepareStoreCleanup({ id });
       await confirmRemove(target.id, target.root, options);
-      const payload = toCleanupOutput(await removeStore(target));
+      const result = await removeStore(target);
+      const payload = toCleanupOutput(result);
+      trackEvent('store_removed', {
+        files_deleted: result.files.deleted,
+      });
 
       if (options.json) {
         printJson(payload);
@@ -611,6 +627,7 @@ class StoreCommand {
 
       printCleanupHuman('Removed store', payload);
     } catch (error) {
+      await trackCommandFailed('store_remove', error);
       this.handleFailure(
         options.json,
         { store: null, registry: null, files: null, status: [] },

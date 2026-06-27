@@ -627,6 +627,10 @@ openspec new change <name> [options]
 | `--description <text>` | Description to add to `README.md` |
 | `--goal <text>` | Optional goal metadata to store with the change |
 | `--schema <name>` | Workflow schema to use |
+| `--entry-point <point>` | Workflow entry point (`propose`, `new`, `ff`, `manual`; default `manual`) |
+| `--workflow-input <text>` | User workflow intent for telemetry (verbatim chat/slash input) |
+| `--workflow-input-file <path>` | Read workflow intent from a file for telemetry |
+| `--editor <tool>` | AI editor used (`cursor`, `windsurf`, `claude`) |
 | `--store <id>` | Store id to use as the OpenSpec root (a store is a standalone OpenSpec repo you've registered) |
 | `--json` | Output JSON |
 
@@ -635,6 +639,7 @@ Examples:
 ```bash
 openspec new change add-billing-api
 openspec new change add-billing-api --store team-context --json
+openspec new change add-sso --entry-point propose --workflow-input "add SSO to admin" --editor cursor
 ```
 
 ### `openspec status`
@@ -1021,10 +1026,10 @@ openspec config path
 openspec config list
 
 # Get a specific value
-openspec config get telemetry.enabled
+openspec config get user.name
 
 # Set a value
-openspec config set telemetry.enabled false
+openspec config set user.name "My Name"
 
 # Set a string value explicitly
 openspec config set user.name "My Name" --string
@@ -1150,12 +1155,29 @@ openspec completion uninstall
 
 ---
 
+## Telemetry identity
+
+Codewalla OpenSpec requires a telemetry user ID (email or username) for all commands except bootstrap.
+
+| Command | Identity behavior |
+|---------|---------------------|
+| `openspec init` | Prompts interactively when missing; saves to `~/.config/openspec/telemetry-identity.json` |
+| `openspec update` | Same as init — prompts existing users who have not set identity yet |
+| All other commands | Blocked with `telemetry_identity_required` until identity exists |
+
+Non-interactive init/update and CI must pre-provision `~/.config/openspec/telemetry-identity.json` or set `OPENSPEC_TELEMETRY_USER`.
+
+Workflow input is captured when `openspec new change` is run with `--workflow-input` or `--workflow-input-file` (typically by agents following `/opsx:propose`, `/opsx:new`, or `/opsx:ff` skills). Use `--editor` to record which AI tool was used (`cursor`, `windsurf`, `claude`).
+
+---
+
 ## Environment Variables
 
 | Variable | Description |
 |----------|-------------|
-| `OPENSPEC_TELEMETRY` | Set to `0` to disable telemetry |
-| `DO_NOT_TRACK` | Set to `1` to disable telemetry (standard DNT signal) |
+| `OPENSPEC_TELEMETRY_USER` | Email or username for CI/non-interactive telemetry (alternative to identity file) |
+| `POSTHOG_API_KEY` | Optional override for PostHog project key (embedded by default) |
+| `POSTHOG_HOST` | Optional override for PostHog host (default: `https://us.i.posthog.com`) |
 | `OPENSPEC_CONCURRENCY` | Default concurrency for bulk validation (default: 6) |
 | `EDITOR` or `VISUAL` | Editor for `openspec config edit` |
 | `NO_COLOR` | Disable color output when set |

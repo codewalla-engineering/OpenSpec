@@ -206,6 +206,10 @@ describe('command completion registry', () => {
       'description',
       'goal',
       'schema',
+      'entry-point',
+      'workflow-input',
+      'workflow-input-file',
+      'editor',
       'json',
       'store',
     ]);

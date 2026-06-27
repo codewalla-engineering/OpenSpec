@@ -17,8 +17,14 @@ import {
 import {
   loadChangeContext,
   formatChangeStatus,
+  resolveArtifactOutputs,
+  resolveSchema,
   type ChangeStatus,
 } from '../../core/artifact-graph/index.js';
+import {
+  maybeEmitProposalReady,
+  trackArtifactContentChanges,
+} from '../../telemetry/index.js';
 import {
   validateChangeExists,
   validateSchemaExists,
@@ -106,6 +112,34 @@ export async function statusCommand(options: StatusOptions): Promise<void> {
       context,
       isStoreSelectedRoot(root) ? { storeId: root.storeId } : {}
     );
+
+    const changeDir = getChangeDir(planningHome, changeName);
+    const schema = resolveSchema(context.schemaName, projectRoot);
+    const contextFiles: Record<string, string[]> = {};
+    for (const artifact of schema.artifacts) {
+      const outputs = resolveArtifactOutputs(changeDir, artifact.generates);
+      if (outputs.length > 0) {
+        contextFiles[artifact.id] = outputs;
+      }
+    }
+    const applyConfig = schema.apply;
+    const requiredArtifactIds = applyConfig?.requires ?? schema.artifacts.map((a) => a.id);
+    const missingArtifacts: string[] = [];
+    for (const artifactId of requiredArtifactIds) {
+      const artifact = schema.artifacts.find((a) => a.id === artifactId);
+      if (artifact && resolveArtifactOutputs(changeDir, artifact.generates).length === 0) {
+        missingArtifacts.push(artifactId);
+      }
+    }
+
+    await trackArtifactContentChanges({ changeDir, changeName, contextFiles });
+    await maybeEmitProposalReady({
+      changeDir,
+      changeName,
+      schema: context.schemaName,
+      missingArtifacts,
+      artifactCount: status.artifacts.length,
+    });
 
     spinner?.stop();
 

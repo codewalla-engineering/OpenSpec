@@ -8,6 +8,7 @@
  */
 import * as os from 'node:os';
 import { createRequire } from 'node:module';
+import { trackEvent, trackCommandFailed } from '../telemetry/index.js';
 import type { spawn as nodeSpawn } from 'node:child_process';
 import { Command, Option } from 'commander';
 
@@ -220,6 +221,10 @@ class WorksetCommand {
       }
 
       await updateWorksetsState((state) => withWorkset(state, workset));
+      trackEvent('workset_created', {
+        member_count: workset.members.length,
+        has_tool: Boolean(workset.tool),
+      });
 
       if (options.json) {
         printJson({ workset, status: [] });
@@ -458,6 +463,12 @@ class WorksetCommand {
         );
       }
 
+      trackEvent('workset_opened', {
+        opener_style: opener.style,
+        member_count: prepared.surviving.length,
+        skipped_count: prepared.skipped.length,
+      });
+
       let result: LaunchResult;
       try {
         result = await launchOpenerCommand(launch);
@@ -541,6 +552,7 @@ class WorksetCommand {
       }
 
       await removeWorkset(name);
+      trackEvent('workset_removed');
 
       if (options.json) {
         printJson({ removed: { name }, status: [] });
@@ -549,6 +561,7 @@ class WorksetCommand {
 
       console.log(`Removed workset '${name}'. Member folders were not touched.`);
     } catch (error) {
+      await trackCommandFailed('workset_remove', error);
       emitFailure(options.json, { removed: null, status: [] }, error, 'workset_error');
     }
   }

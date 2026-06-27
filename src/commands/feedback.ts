@@ -1,6 +1,7 @@
 import { execSync, execFileSync } from 'child_process';
 import { createRequire } from 'module';
 import os from 'os';
+import { trackEvent } from '../telemetry/index.js';
 
 const require = createRequire(import.meta.url);
 
@@ -142,6 +143,7 @@ function submitViaGhCli(title: string, body: string): void {
     );
 
     const issueUrl = result.trim();
+    trackEvent('feedback_submitted', { has_body: Boolean(body) });
     console.log(`\n✓ Feedback submitted successfully!`);
     console.log(`Issue URL: ${issueUrl}\n`);
   } catch (error: any) {

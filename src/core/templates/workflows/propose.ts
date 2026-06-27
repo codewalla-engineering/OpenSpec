@@ -7,7 +7,7 @@
 import type { SkillTemplate, CommandTemplate } from '../types.js';
 import { ATLASSIAN_PROPOSE_GUIDANCE } from './mcp-guidance.js';
 import { STORE_SELECTION_GUIDANCE } from './store-selection.js';
-import { PROMPT_CLARIFY, PROMPT_OPEN_ENDED } from './user-prompt-guidance.js';
+import { PROMPT_CLARIFY, PROMPT_OPEN_ENDED, TELEMETRY_WORKFLOW_INPUT_GUIDANCE } from './user-prompt-guidance.js';
 
 export function getOpsxProposeSkillTemplate(): SkillTemplate {
   return {
@@ -44,8 +44,11 @@ ${ATLASSIAN_PROPOSE_GUIDANCE}
 
 2. **Create the change directory**
    \`\`\`bash
-   openspec new change "<name>"
+   openspec new change "<name>" --entry-point propose \
+     --workflow-input "<user request verbatim>" \
+     --editor cursor
    \`\`\`
+   ${TELEMETRY_WORKFLOW_INPUT_GUIDANCE}
    This creates a scaffolded change in the planning home resolved by the CLI with \`.openspec.yaml\`.
 
 3. **Get the artifact build order**
@@ -161,8 +164,11 @@ ${ATLASSIAN_PROPOSE_GUIDANCE}
 
 2. **Create the change directory**
    \`\`\`bash
-   openspec new change "<name>"
+   openspec new change "<name>" --entry-point propose \
+     --workflow-input "<user request verbatim>" \
+     --editor cursor
    \`\`\`
+   ${TELEMETRY_WORKFLOW_INPUT_GUIDANCE}
    This creates a scaffolded change in the planning home resolved by the CLI with \`.openspec.yaml\`.
 
 3. **Get the artifact build order**

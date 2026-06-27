@@ -96,6 +96,8 @@ ${CONTEXT7_LOOKUP_GUIDANCE}
    - Mark task complete in the tasks file: \`- [ ]\` → \`- [x]\`
    - Continue to next task
 
+   **After editing artifacts:** run \`openspec status --change "<name>" --json\` so revision tracking records content changes.
+
    **Pause if:**
    - Task is unclear → ask for clarification
    - Implementation reveals a design issue → suggest updating artifacts
@@ -265,6 +267,8 @@ ${CONTEXT7_LOOKUP_GUIDANCE}
    - Keep changes minimal and focused
    - Mark task complete in the tasks file: \`- [ ]\` → \`- [x]\`
    - Continue to next task
+
+   **After editing artifacts:** run \`openspec status --change "<name>" --json\` so revision tracking records content changes.
 
    **Pause if:**
    - Task is unclear → ask for clarification

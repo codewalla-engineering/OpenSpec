@@ -64,7 +64,7 @@ describe('store command', () => {
       XDG_DATA_HOME: dataHome,
       XDG_CONFIG_HOME: configHome,
       OPEN_SPEC_INTERACTIVE: '0',
-      OPENSPEC_TELEMETRY: '0',
+      OPENSPEC_TELEMETRY_USER: 'test@codewalla.com',
     };
     globalDataDir = getGlobalDataDir({ env });
 
@@ -191,7 +191,7 @@ describe('store command', () => {
       ...process.env,
       XDG_DATA_HOME: dataHome,
       XDG_CONFIG_HOME: configHome,
-      OPENSPEC_TELEMETRY: '0',
+      OPENSPEC_TELEMETRY_USER: 'test@codewalla.com',
     };
     delete process.env.OPEN_SPEC_INTERACTIVE;
     delete process.env.CI;
@@ -414,7 +414,7 @@ describe('store command', () => {
       ...process.env,
       XDG_DATA_HOME: dataHome,
       XDG_CONFIG_HOME: configHome,
-      OPENSPEC_TELEMETRY: '0',
+      OPENSPEC_TELEMETRY_USER: 'test@codewalla.com',
     };
     delete process.env.OPEN_SPEC_INTERACTIVE;
     delete process.env.CI;
@@ -459,7 +459,7 @@ describe('store command', () => {
       ...process.env,
       XDG_DATA_HOME: dataHome,
       XDG_CONFIG_HOME: configHome,
-      OPENSPEC_TELEMETRY: '0',
+      OPENSPEC_TELEMETRY_USER: 'test@codewalla.com',
     };
     delete process.env.OPEN_SPEC_INTERACTIVE;
     delete process.env.CI;
@@ -550,7 +550,7 @@ describe('store command', () => {
       ...process.env,
       XDG_DATA_HOME: dataHome,
       XDG_CONFIG_HOME: configHome,
-      OPENSPEC_TELEMETRY: '0',
+      OPENSPEC_TELEMETRY_USER: 'test@codewalla.com',
     };
     delete process.env.OPEN_SPEC_INTERACTIVE;
     delete process.env.CI;

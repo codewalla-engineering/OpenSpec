@@ -1,5 +1,6 @@
 import ora from 'ora';
 import path from 'path';
+import { trackEvent } from '../telemetry/index.js';
 import { Validator } from '../core/validation/validator.js';
 import {
   resolveRootForCommand,
@@ -186,7 +187,7 @@ export class ValidateCommand {
       const report = await validator.validateChangeDeltaSpecs(changeDir);
       const durationMs = Date.now() - start;
       this.printReport('change', id, report, durationMs, opts.json, root);
-      // Non-zero exit if invalid (keeps enriched output test semantics)
+      trackEvent('change_validated', { valid: report.valid, issue_count: report.issues.length, strict: opts.strict, duration_ms: durationMs });
       process.exitCode = report.valid ? 0 : 1;
       return;
     }
@@ -195,6 +196,7 @@ export class ValidateCommand {
     const report = await validator.validateSpec(file);
     const durationMs = Date.now() - start;
     this.printReport('spec', id, report, durationMs, opts.json, root);
+    trackEvent('spec_validated', { valid: report.valid, issue_count: report.issues.length, strict: opts.strict, duration_ms: durationMs });
     process.exitCode = report.valid ? 0 : 1;
   }
 
@@ -349,6 +351,14 @@ export class ValidateCommand {
       }
     }
 
+    trackEvent('bulk_validation_run', {
+      total: summary.totals.items,
+      passed: summary.totals.passed,
+      failed: summary.totals.failed,
+      scope_changes: scope.changes,
+      scope_specs: scope.specs,
+      strict: opts.strict,
+    });
     process.exitCode = failed > 0 ? 1 : 0;
   }
 }

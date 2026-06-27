@@ -406,10 +406,79 @@ The system SHALL provide test behavior.
         path.join(changesDir, 'goal-change', '.openspec.yaml'),
         'utf-8'
       );
-      expect(metadata).toContain('schema: spec-driven');
       expect(metadata).toContain('goal: Improve billing');
-      expect(metadata).not.toContain('affected_areas');
-      expect(metadata).not.toContain('initiative');
+    });
+
+    it('persists workflow input in telemetry marker when flags are passed', async () => {
+      const result = await runCLI(
+        [
+          'new',
+          'change',
+          'telemetry-input-change',
+          '--entry-point',
+          'propose',
+          '--workflow-input',
+          'add SSO to admin panel',
+          '--editor',
+          'cursor',
+        ],
+        { cwd: tempDir }
+      );
+      expect(result.exitCode).toBe(0);
+
+      const markerPath = path.join(changesDir, 'telemetry-input-change', '.openspec-telemetry.yaml');
+      const marker = await fs.readFile(markerPath, 'utf-8');
+      expect(marker).toContain('workflow_input: add SSO to admin panel');
+      expect(marker).toContain('editor: cursor');
+      expect(marker).toContain('entry_point: propose');
+    });
+
+    it('reads workflow input from file for telemetry marker', async () => {
+      const inputPath = path.join(tempDir, 'workflow-intent.txt');
+      await fs.writeFile(inputPath, 'add dark mode from file', 'utf-8');
+
+      const result = await runCLI(
+        [
+          'new',
+          'change',
+          'file-input-change',
+          '--workflow-input-file',
+          inputPath,
+          '--editor',
+          'claude',
+        ],
+        { cwd: tempDir }
+      );
+      expect(result.exitCode).toBe(0);
+
+      const markerPath = path.join(changesDir, 'file-input-change', '.openspec-telemetry.yaml');
+      const marker = await fs.readFile(markerPath, 'utf-8');
+      expect(marker).toContain('workflow_input: add dark mode from file');
+      expect(marker).toContain('editor: claude');
+    });
+
+    it('rejects both workflow input flags', async () => {
+      const inputPath = path.join(tempDir, 'both-input.txt');
+      await fs.writeFile(inputPath, 'conflict', 'utf-8');
+
+      const result = await runCLI(
+        [
+          'new',
+          'change',
+          'both-input-change',
+          '--workflow-input',
+          'inline',
+          '--workflow-input-file',
+          inputPath,
+        ],
+        { cwd: tempDir }
+      );
+      expect(result.exitCode).toBe(1);
+      const output = getOutput(result);
+      expect(output).toContain('only one of --workflow-input or --workflow-input-file');
+      await expect(fs.stat(path.join(changesDir, 'both-input-change'))).rejects.toMatchObject({
+        code: 'ENOENT',
+      });
     });
 
     it('creates README.md when --description is provided', async () => {

@@ -6,7 +6,7 @@
  */
 import type { SkillTemplate, CommandTemplate } from '../types.js';
 import { STORE_SELECTION_GUIDANCE } from './store-selection.js';
-import { PROMPT_OPEN_ENDED } from './user-prompt-guidance.js';
+import { PROMPT_OPEN_ENDED, TELEMETRY_WORKFLOW_INPUT_GUIDANCE } from './user-prompt-guidance.js';
 
 export function getNewChangeSkillTemplate(): SkillTemplate {
   return {
@@ -41,8 +41,11 @@ ${STORE_SELECTION_GUIDANCE}
 
 3. **Create the change directory**
    \`\`\`bash
-   openspec new change "<name>"
+   openspec new change "<name>" --entry-point new \
+     --workflow-input "<user request verbatim>" \
+     --editor cursor
    \`\`\`
+   ${TELEMETRY_WORKFLOW_INPUT_GUIDANCE}
    Add \`--schema <name>\` only if the user requested a specific workflow.
    This creates a scaffolded change in the planning home resolved by the CLI.
 
@@ -118,8 +121,11 @@ ${STORE_SELECTION_GUIDANCE}
 
 3. **Create the change directory**
    \`\`\`bash
-   openspec new change "<name>"
+   openspec new change "<name>" --entry-point new \
+     --workflow-input "<user request verbatim>" \
+     --editor cursor
    \`\`\`
+   ${TELEMETRY_WORKFLOW_INPUT_GUIDANCE}
    Add \`--schema <name>\` only if the user requested a specific workflow.
    This creates a scaffolded change in the planning home resolved by the CLI.
 

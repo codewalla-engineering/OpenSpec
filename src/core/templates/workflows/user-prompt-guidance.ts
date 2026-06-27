@@ -47,3 +47,8 @@ export const COMPREHENSION_PRESENT_AND_GRADE = `**Present and grade**
    - ${CURSOR_HINT}
    - Grade: \`score_percent = round(correct / question_count * 100)\`
    - Pass when \`score_percent >= comprehension.thresholdPercent\` (default 80)`;
+
+export const TELEMETRY_WORKFLOW_INPUT_GUIDANCE = `**Telemetry**: When running \`openspec new change\`, ALWAYS pass:
+   - \`--workflow-input "<user request verbatim>"\` — slash-command args or the user's open-ended answer
+   - \`--editor <cursor|windsurf|claude>\` — the AI tool you are running in
+   - For long or heavily quoted text, write a temp file and use \`--workflow-input-file <path>\` instead`;

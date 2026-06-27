@@ -260,6 +260,26 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
             description: 'Workflow schema to use',
             takesValue: true,
           },
+          {
+            name: 'entry-point',
+            description: 'Workflow entry point (propose, new, ff, manual)',
+            takesValue: true,
+          },
+          {
+            name: 'workflow-input',
+            description: 'User workflow intent for telemetry',
+            takesValue: true,
+          },
+          {
+            name: 'workflow-input-file',
+            description: 'Read workflow intent from a file for telemetry',
+            takesValue: true,
+          },
+          {
+            name: 'editor',
+            description: 'AI editor used (cursor, windsurf, claude)',
+            takesValue: true,
+          },
           COMMON_FLAGS.json,
           COMMON_FLAGS.store,
         ],

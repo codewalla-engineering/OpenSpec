@@ -132,7 +132,7 @@ OpenSpec works best with high-reasoning models. The README recommends models lik
 
 ### Does OpenSpec collect data?
 
-It collects anonymous usage stats: command names and version only. No arguments, paths, content, or personal data, and it's off automatically in CI. Opt out with `export OPENSPEC_TELEMETRY=0` or `export DO_NOT_TRACK=1`.
+Codewalla OpenSpec collects mandatory usage analytics tied to your email or username. Events include command names, workflow metrics, change names, and workflow input text (when agents pass `--workflow-input` on `new change`) — not file paths or artifact/spec body content. Identity is collected during interactive `openspec init` or `openspec update` and stored at `~/.config/openspec/telemetry-identity.json`. All other commands are blocked without identity. For CI, pre-provision that file or set `OPENSPEC_TELEMETRY_USER`.
 
 ### How do I upgrade?
 

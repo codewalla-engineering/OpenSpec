@@ -37,7 +37,7 @@ describe('openspec workset (7.1)', () => {
       XDG_DATA_HOME: path.join(tempDir, 'data'),
       XDG_CONFIG_HOME: path.join(tempDir, 'config'),
       OPEN_SPEC_INTERACTIVE: '0',
-      OPENSPEC_TELEMETRY: '0',
+      OPENSPEC_TELEMETRY_USER: 'test@codewalla.com',
       // Fully controlled PATH: node (for the fake-tool shims) plus
       // whatever fakes each test prepends. Real editors/agents on the
       // host machine must never be reachable from these tests.

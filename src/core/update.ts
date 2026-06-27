@@ -34,6 +34,7 @@ import {
   type LegacyDetectionResult,
 } from './legacy-cleanup.js';
 import { isInteractive } from '../utils/interactive.js';
+import { setupTelemetryIdentity } from '../telemetry/index.js';
 import { getGlobalConfig, type Delivery, type Profile } from './global-config.js';
 import { getProfileWorkflows, ALL_WORKFLOWS } from './profiles.js';
 import { getAvailableTools } from './available-tools.js';
@@ -88,6 +89,8 @@ export class UpdateCommand {
     if (!await FileSystemUtils.directoryExists(openspecPath)) {
       throw new Error(`No OpenSpec directory found. Run 'openspec init' first.`);
     }
+
+    await setupTelemetryIdentity({ interactive: isInteractive() });
 
     // 2. Perform one-time migration if needed before any legacy upgrade generation.
     // Use detected tool directories to preserve existing opsx skills/commands.
