@@ -25,6 +25,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     globalSetup: './vitest.setup.ts',
+    setupFiles: ['./test/setup-env.ts'],
     // Tests rely on per-file process isolation (e.g., `process.cwd()` assumptions).
     pool: 'forks',
     maxWorkers: resolveMaxWorkers(),

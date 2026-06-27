@@ -18,6 +18,8 @@ import {
   writeUpdatedSpec,
   type SpecUpdate,
 } from './specs-apply.js';
+import { trackChangeArchived, buildSpecDeltasFromUpdates } from '../telemetry/index.js';
+import { readChangeMetadata } from '../utils/change-metadata.js';
 
 async function listActiveChangeNames(changesDir: string): Promise<string[]> {
   try {
@@ -373,6 +375,10 @@ export class ArchiveCommand {
     // Handle spec updates unless skipSpecs flag is set
     let specsUpdated = false;
     let totals: ArchiveResult['totals'];
+    let archivedSpecDeltas: Array<{
+      source: string;
+      counts: { added: number; modified: number; removed: number; renamed: number };
+    }> = [];
     if (options.skipSpecs) {
       if (!json) {
         console.log('Skipping spec updates (--skip-specs flag provided).');
@@ -471,6 +477,10 @@ export class ArchiveCommand {
           }
           specsUpdated = true;
           totals = writeTotals;
+          archivedSpecDeltas = prepared.map((p) => ({
+            source: p.update.source,
+            counts: p.counts,
+          }));
           if (!json) {
             console.log(
               `Totals: + ${writeTotals.added}, ~ ${writeTotals.modified}, - ${writeTotals.removed}, → ${writeTotals.renamed}`
@@ -504,6 +514,20 @@ export class ArchiveCommand {
 
     // Move change to archive (uses copy+remove on EPERM/EXDEV, e.g. Windows)
     await moveDirectory(changeDir, archivePath);
+
+    const metadata = readChangeMetadata(archivePath, root.path);
+    const schema = metadata?.schema ?? root.defaultSchema;
+    const specDeltas = await buildSpecDeltasFromUpdates(archivedSpecDeltas);
+    await trackChangeArchived({
+      changeDir: archivePath,
+      changeName: changeName!,
+      schema,
+      specsUpdated,
+      totals,
+      tasksComplete: incompleteTasks === 0,
+      specDeltas,
+      projectRoot: root.path,
+    });
 
     if (!json) {
       console.log(`Change '${changeName}' archived as '${archiveName}'.`);

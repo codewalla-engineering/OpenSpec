@@ -44,7 +44,7 @@ describe('artifact-workflow CLI commands', () => {
    */
   async function createTestChange(
     changeName: string,
-    artifacts: ('proposal' | 'design' | 'specs' | 'tasks')[] = []
+    artifacts: ('proposal' | 'design' | 'specs' | 'plan' | 'tasks')[] = []
   ): Promise<string> {
     const changeDir = path.join(changesDir, changeName);
     await fs.mkdir(changeDir, { recursive: true });
@@ -65,6 +65,13 @@ describe('artifact-workflow CLI commands', () => {
       const specsDir = path.join(changeDir, 'specs');
       await fs.mkdir(specsDir, { recursive: true });
       await fs.writeFile(path.join(specsDir, 'test-spec.md'), '## Purpose\nTest spec.');
+    }
+
+    if (artifacts.includes('plan')) {
+      await fs.writeFile(
+        path.join(changeDir, 'plan.md'),
+        '## Code Map\n- src/example.ts\n\n## Test Plan\n- Run unit tests\n'
+      );
     }
 
     if (artifacts.includes('tasks')) {
@@ -89,7 +96,7 @@ The system SHALL provide test behavior.
 `;
 
   async function createChangeWithDeltaSpecs(changeName: string): Promise<string> {
-    const changeDir = await createTestChange(changeName, ['proposal', 'design', 'specs', 'tasks']);
+    const changeDir = await createTestChange(changeName, ['proposal', 'design', 'specs', 'plan', 'tasks']);
     const specsDir = path.join(changeDir, 'specs');
     await fs.writeFile(path.join(specsDir, 'test-spec.md'), DELTA_SPEC_CONTENT);
     return changeDir;
@@ -104,7 +111,7 @@ The system SHALL provide test behavior.
       const result = await runCLI(['status', '--change', 'scaffolded-change'], { cwd: tempDir });
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain('scaffolded-change');
-      expect(result.stdout).toContain('0/4 artifacts complete');
+      expect(result.stdout).toContain('0/5 artifacts complete');
     });
 
     it('shows status for a change with proposal only', async () => {
@@ -115,7 +122,7 @@ The system SHALL provide test behavior.
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain('minimal-change');
       expect(result.stdout).toContain('spec-driven');
-      expect(result.stdout).toContain('1/4 artifacts complete');
+      expect(result.stdout).toContain('1/5 artifacts complete');
     });
 
     it('shows status for a change with proposal and design', async () => {
@@ -123,7 +130,7 @@ The system SHALL provide test behavior.
 
       const result = await runCLI(['status', '--change', 'partial-change'], { cwd: tempDir });
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('2/4 artifacts complete');
+      expect(result.stdout).toContain('2/5 artifacts complete');
       expect(result.stdout).toContain('[x]');
     });
 
@@ -141,18 +148,18 @@ The system SHALL provide test behavior.
       expect(json.schemaName).toBe('spec-driven');
       expect(json.isComplete).toBe(false);
       expect(Array.isArray(json.artifacts)).toBe(true);
-      expect(json.artifacts).toHaveLength(4);
+      expect(json.artifacts).toHaveLength(5);
 
       const proposalArtifact = json.artifacts.find((a: any) => a.id === 'proposal');
       expect(proposalArtifact.status).toBe('done');
     });
 
     it('shows complete status when all artifacts are done', async () => {
-      await createTestChange('complete-change', ['proposal', 'design', 'specs', 'tasks']);
+      await createTestChange('complete-change', ['proposal', 'design', 'specs', 'plan', 'tasks']);
 
       const result = await runCLI(['status', '--change', 'complete-change'], { cwd: tempDir });
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('4/4 artifacts complete');
+      expect(result.stdout).toContain('5/5 artifacts complete');
       expect(result.stdout).toContain('All artifacts complete!');
     });
 
@@ -399,10 +406,79 @@ The system SHALL provide test behavior.
         path.join(changesDir, 'goal-change', '.openspec.yaml'),
         'utf-8'
       );
-      expect(metadata).toContain('schema: spec-driven');
       expect(metadata).toContain('goal: Improve billing');
-      expect(metadata).not.toContain('affected_areas');
-      expect(metadata).not.toContain('initiative');
+    });
+
+    it('persists workflow input in telemetry marker when flags are passed', async () => {
+      const result = await runCLI(
+        [
+          'new',
+          'change',
+          'telemetry-input-change',
+          '--entry-point',
+          'propose',
+          '--workflow-input',
+          'add SSO to admin panel',
+          '--editor',
+          'cursor',
+        ],
+        { cwd: tempDir }
+      );
+      expect(result.exitCode).toBe(0);
+
+      const markerPath = path.join(changesDir, 'telemetry-input-change', '.openspec-telemetry.yaml');
+      const marker = await fs.readFile(markerPath, 'utf-8');
+      expect(marker).toContain('workflow_input: add SSO to admin panel');
+      expect(marker).toContain('editor: cursor');
+      expect(marker).toContain('entry_point: propose');
+    });
+
+    it('reads workflow input from file for telemetry marker', async () => {
+      const inputPath = path.join(tempDir, 'workflow-intent.txt');
+      await fs.writeFile(inputPath, 'add dark mode from file', 'utf-8');
+
+      const result = await runCLI(
+        [
+          'new',
+          'change',
+          'file-input-change',
+          '--workflow-input-file',
+          inputPath,
+          '--editor',
+          'claude',
+        ],
+        { cwd: tempDir }
+      );
+      expect(result.exitCode).toBe(0);
+
+      const markerPath = path.join(changesDir, 'file-input-change', '.openspec-telemetry.yaml');
+      const marker = await fs.readFile(markerPath, 'utf-8');
+      expect(marker).toContain('workflow_input: add dark mode from file');
+      expect(marker).toContain('editor: claude');
+    });
+
+    it('rejects both workflow input flags', async () => {
+      const inputPath = path.join(tempDir, 'both-input.txt');
+      await fs.writeFile(inputPath, 'conflict', 'utf-8');
+
+      const result = await runCLI(
+        [
+          'new',
+          'change',
+          'both-input-change',
+          '--workflow-input',
+          'inline',
+          '--workflow-input-file',
+          inputPath,
+        ],
+        { cwd: tempDir }
+      );
+      expect(result.exitCode).toBe(1);
+      const output = getOutput(result);
+      expect(output).toContain('only one of --workflow-input or --workflow-input-file');
+      await expect(fs.stat(path.join(changesDir, 'both-input-change'))).rejects.toMatchObject({
+        code: 'ENOENT',
+      });
     });
 
     it('creates README.md when --description is provided', async () => {
@@ -442,7 +518,7 @@ The system SHALL provide test behavior.
 
   describe('instructions apply command', () => {
     it('shows apply instructions for spec-driven schema with tasks', async () => {
-      await createTestChange('apply-change', ['proposal', 'design', 'specs', 'tasks']);
+      await createTestChange('apply-change', ['proposal', 'design', 'specs', 'plan', 'tasks']);
 
       const result = await runCLI(['instructions', 'apply', '--change', 'apply-change'], {
         cwd: tempDir,
@@ -455,7 +531,7 @@ The system SHALL provide test behavior.
     });
 
     it('shows blocked state when required artifacts are missing', async () => {
-      // Only create proposal - missing tasks (required by spec-driven apply block)
+      // Only create proposal - missing plan and tasks (required by spec-driven apply block)
       await createTestChange('blocked-apply', ['proposal']);
 
       const result = await runCLI(['instructions', 'apply', '--change', 'blocked-apply'], {
@@ -463,11 +539,13 @@ The system SHALL provide test behavior.
       });
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain('Blocked');
-      expect(result.stdout).toContain('Missing artifacts: tasks');
+      expect(result.stdout).toContain('Missing artifacts:');
+      expect(result.stdout).toContain('plan');
+      expect(result.stdout).toContain('tasks');
     });
 
     it('outputs JSON for apply instructions', async () => {
-      await createTestChange('json-apply', ['proposal', 'design', 'specs', 'tasks']);
+      await createTestChange('json-apply', ['proposal', 'design', 'specs', 'plan', 'tasks']);
 
       const result = await runCLI(
         ['instructions', 'apply', '--change', 'json-apply', '--json'],
@@ -545,7 +623,7 @@ apply:
     });
 
     it('shows schema instruction from apply block', async () => {
-      await createTestChange('instr-apply', ['proposal', 'design', 'specs', 'tasks']);
+      await createTestChange('instr-apply', ['proposal', 'design', 'specs', 'plan', 'tasks']);
 
       const result = await runCLI(['instructions', 'apply', '--change', 'instr-apply'], {
         cwd: tempDir,
@@ -560,6 +638,7 @@ apply:
         'proposal',
         'design',
         'specs',
+        'plan',
         'tasks',
       ]);
       // Overwrite tasks with all completed
@@ -578,7 +657,7 @@ apply:
 
     it('uses spec-driven schema apply configuration', async () => {
       // Create a spec-driven style change with all artifacts
-      await createTestChange('apply-schema-test', ['proposal', 'design', 'specs', 'tasks']);
+      await createTestChange('apply-schema-test', ['proposal', 'design', 'specs', 'plan', 'tasks']);
 
       const result = await runCLI(
         ['instructions', 'apply', '--change', 'apply-schema-test', '--schema', 'spec-driven'],
@@ -590,7 +669,7 @@ apply:
 
     it('spec-driven schema uses apply block configuration', async () => {
       // Verify that spec-driven schema uses its apply block (requires: [tasks])
-      await createTestChange('apply-config-test', ['proposal', 'design', 'specs', 'tasks']);
+      await createTestChange('apply-config-test', ['proposal', 'design', 'specs', 'plan', 'tasks']);
 
       const result = await runCLI(
         ['instructions', 'apply', '--change', 'apply-config-test', '--json'],
@@ -599,7 +678,7 @@ apply:
       expect(result.exitCode).toBe(0);
 
       const json = JSON.parse(result.stdout);
-      // spec-driven schema has apply block with requires: [tasks], so should be ready
+      // spec-driven schema has apply block with requires: [plan, tasks], so should be ready
       expect(json.schemaName).toBe('spec-driven');
       expect(json.state).toBe('ready');
     });
@@ -618,6 +697,10 @@ apply:
       expect(json.comprehension.required).toBe(true);
       expect(json.comprehension.passed).toBe(false);
       expect(json.comprehension.questionCount).toBeGreaterThanOrEqual(5);
+      expect(json.comprehension.optionsPerQuestion).toBe(3);
+      expect(json.comprehension.questionAllocation.plan).toBeGreaterThan(
+        json.comprehension.questionAllocation.specs ?? 0
+      );
     });
 
     it('allows apply after recording comprehension pass', async () => {

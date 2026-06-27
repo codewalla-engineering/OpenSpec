@@ -477,7 +477,7 @@ When determining which schema to use, OPSX checks in order:
 
 | Schema | Artifacts | Best For |
 |--------|-----------|----------|
-| `spec-driven` | proposal → specs → design → tasks | Most projects |
+| `spec-driven` | proposal → specs → design → plan → tasks | Most projects |
 
 List all available schemas:
 
@@ -501,6 +501,17 @@ openspec schema fork spec-driven my-workflow
 
 See [Customization](customization.md) for details.
 
+### Mandatory plan.md (spec-driven)
+
+The default `spec-driven` schema now includes a mandatory `plan.md` artifact between design and tasks. Apply requires both `plan.md` and `tasks.md`.
+
+**If apply is blocked with `missingArtifacts: ["plan"]`:**
+
+1. Run `/opsx:continue` to generate `plan.md`, or create it manually from the template.
+2. Ensure tasks reflect the plan before running `/opsx:apply`.
+
+Existing changes with `tasks.md` but no `plan.md` must add a plan before apply proceeds.
+
 ---
 
 ## Troubleshooting
@@ -521,7 +532,7 @@ Restart your IDE. Skills are detected at startup.
 
 Check that your `rules:` keys match your schema's artifact IDs:
 
-- **spec-driven**: `proposal`, `specs`, `design`, `tasks`
+- **spec-driven**: `proposal`, `specs`, `design`, `plan`, `tasks`
 
 Run this to see valid artifact IDs:
 

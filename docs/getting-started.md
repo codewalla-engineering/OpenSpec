@@ -87,7 +87,7 @@ Each change folder contains artifacts that guide the work:
 **Artifacts build on each other:**
 
 ```
-proposal ──► specs ──► design ──► tasks ──► implement
+proposal ──► specs ──► design ──► plan ──► tasks ──► implement
    ▲           ▲          ▲                    │
    └───────────┴──────────┴────────────────────┘
             update as you learn

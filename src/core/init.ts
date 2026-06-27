@@ -47,6 +47,7 @@ import { getGlobalConfig, type Delivery, type Profile } from './global-config.js
 import { getProfileWorkflows, CORE_WORKFLOWS, ALL_WORKFLOWS } from './profiles.js';
 import { getAvailableTools } from './available-tools.js';
 import { migrateIfNeeded } from './migration.js';
+import { setupTelemetryIdentity } from '../telemetry/index.js';
 
 const require = createRequire(import.meta.url);
 const { version: OPENSPEC_VERSION } = require('../../package.json');
@@ -156,6 +157,8 @@ export class InitCommand {
       const { showWelcomeScreen } = await import('../ui/welcome-screen.js');
       await showWelcomeScreen();
     }
+
+    await setupTelemetryIdentity({ interactive: canPrompt });
 
     // Validate profile override early so invalid values fail before tool setup.
     // The resolved value is consumed later when generation reads effective config.

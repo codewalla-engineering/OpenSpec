@@ -15,6 +15,7 @@ import {
   COMPREHENSION_QUIZ_GUIDANCE,
 } from './comprehension-guidance.js';
 import { STORE_SELECTION_GUIDANCE } from './store-selection.js';
+import { PROMPT_SELECT_CHANGE } from './user-prompt-guidance.js';
 
 export function getApplyChangeSkillTemplate(): SkillTemplate {
   return {
@@ -33,7 +34,7 @@ ${STORE_SELECTION_GUIDANCE}
    If a name is provided, use it. Otherwise:
    - Infer from conversation context if the user mentioned a change
    - Auto-select if only one active change exists
-   - If ambiguous, run \`openspec list --json\` to get available changes and use the **AskUserQuestion tool** to let the user select
+   - If ambiguous, ${PROMPT_SELECT_CHANGE}
 
    Always announce: "Using change: <name>" and how to override (e.g., \`/opsx:apply <other>\`).
 
@@ -72,7 +73,7 @@ ${COMPREHENSION_QUIZ_GUIDANCE}
 
    After comprehension is passed (or not required), read every file path listed under \`contextFiles\` from the apply instructions output.
    The files depend on the schema being used:
-   - **spec-driven**: proposal, specs, design, tasks
+   - **spec-driven**: proposal, specs, design, plan, tasks
    - Other schemas: follow the contextFiles from CLI output
 
 6. **Show current progress**
@@ -94,6 +95,8 @@ ${CONTEXT7_LOOKUP_GUIDANCE}
    - Keep changes minimal and focused
    - Mark task complete in the tasks file: \`- [ ]\` → \`- [x]\`
    - Continue to next task
+
+   **After editing artifacts:** run \`openspec status --change "<name>" --json\` so revision tracking records content changes.
 
    **Pause if:**
    - Task is unclear → ask for clarification
@@ -203,7 +206,7 @@ ${STORE_SELECTION_GUIDANCE}
    If a name is provided, use it. Otherwise:
    - Infer from conversation context if the user mentioned a change
    - Auto-select if only one active change exists
-   - If ambiguous, run \`openspec list --json\` to get available changes and use the **AskUserQuestion tool** to let the user select
+   - If ambiguous, ${PROMPT_SELECT_CHANGE}
 
    Always announce: "Using change: <name>" and how to override (e.g., \`/opsx:apply <other>\`).
 
@@ -242,7 +245,7 @@ ${COMPREHENSION_QUIZ_GUIDANCE}
 
    After comprehension is passed (or not required), read every file path listed under \`contextFiles\` from the apply instructions output.
    The files depend on the schema being used:
-   - **spec-driven**: proposal, specs, design, tasks
+   - **spec-driven**: proposal, specs, design, plan, tasks
    - Other schemas: follow the contextFiles from CLI output
 
 6. **Show current progress**
@@ -264,6 +267,8 @@ ${CONTEXT7_LOOKUP_GUIDANCE}
    - Keep changes minimal and focused
    - Mark task complete in the tasks file: \`- [ ]\` → \`- [x]\`
    - Continue to next task
+
+   **After editing artifacts:** run \`openspec status --change "<name>" --json\` so revision tracking records content changes.
 
    **Pause if:**
    - Task is unclear → ask for clarification

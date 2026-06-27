@@ -6,6 +6,7 @@
  */
 import type { SkillTemplate, CommandTemplate } from '../types.js';
 import { STORE_SELECTION_GUIDANCE } from './store-selection.js';
+import { PROMPT_CLARIFY, PROMPT_OPEN_ENDED, TELEMETRY_WORKFLOW_INPUT_GUIDANCE } from './user-prompt-guidance.js';
 
 export function getFfChangeSkillTemplate(): SkillTemplate {
   return {
@@ -21,7 +22,7 @@ ${STORE_SELECTION_GUIDANCE}
 
 1. **If no clear input provided, ask what they want to build**
 
-   Use the **AskUserQuestion tool** (open-ended, no preset options) to ask:
+   ${PROMPT_OPEN_ENDED} Ask:
    > "What change do you want to work on? Describe what you want to build or fix."
 
    From their description, derive a kebab-case name (e.g., "add user authentication" → \`add-user-auth\`).
@@ -30,8 +31,11 @@ ${STORE_SELECTION_GUIDANCE}
 
 2. **Create the change directory**
    \`\`\`bash
-   openspec new change "<name>"
+   openspec new change "<name>" --entry-point ff \
+     --workflow-input "<user request verbatim>" \
+     --editor cursor
    \`\`\`
+   ${TELEMETRY_WORKFLOW_INPUT_GUIDANCE}
    This creates a scaffolded change in the planning home resolved by the CLI.
 
 3. **Get the artifact build order**
@@ -72,7 +76,7 @@ ${STORE_SELECTION_GUIDANCE}
       - Stop when all \`applyRequires\` artifacts are done
 
    c. **If an artifact requires user input** (unclear context):
-      - Use **AskUserQuestion tool** to clarify
+      - ${PROMPT_CLARIFY}
       - Then continue with creation
 
 5. **Show final status**
@@ -126,7 +130,7 @@ ${STORE_SELECTION_GUIDANCE}
 
 1. **If no input provided, ask what they want to build**
 
-   Use the **AskUserQuestion tool** (open-ended, no preset options) to ask:
+   ${PROMPT_OPEN_ENDED} Ask:
    > "What change do you want to work on? Describe what you want to build or fix."
 
    From their description, derive a kebab-case name (e.g., "add user authentication" → \`add-user-auth\`).
@@ -135,8 +139,11 @@ ${STORE_SELECTION_GUIDANCE}
 
 2. **Create the change directory**
    \`\`\`bash
-   openspec new change "<name>"
+   openspec new change "<name>" --entry-point ff \
+     --workflow-input "<user request verbatim>" \
+     --editor cursor
    \`\`\`
+   ${TELEMETRY_WORKFLOW_INPUT_GUIDANCE}
    This creates a scaffolded change in the planning home resolved by the CLI.
 
 3. **Get the artifact build order**
@@ -177,7 +184,7 @@ ${STORE_SELECTION_GUIDANCE}
       - Stop when all \`applyRequires\` artifacts are done
 
    c. **If an artifact requires user input** (unclear context):
-      - Use **AskUserQuestion tool** to clarify
+      - ${PROMPT_CLARIFY}
       - Then continue with creation
 
 5. **Show final status**

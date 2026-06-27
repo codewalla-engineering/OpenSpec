@@ -152,6 +152,23 @@ describe('instruction-loader', () => {
       expect(instructions.template).toContain('## Why');
     });
 
+    it('should include Jira naming guidance in proposal instructions', () => {
+      const context = loadChangeContext(tempDir, 'my-change');
+      const instructions = generateInstructions(context, 'proposal');
+
+      expect(instructions.instruction).toContain('behavioral domain');
+      expect(instructions.instruction).toContain('not by ticket key');
+      expect(instructions.instruction).toContain('Jira: CW-1234');
+    });
+
+    it('should include Jira naming guidance in specs instructions', () => {
+      const context = loadChangeContext(tempDir, 'my-change');
+      const instructions = generateInstructions(context, 'specs');
+
+      expect(instructions.instruction).toContain('specs/<ticket-key>/');
+      expect(instructions.instruction).toContain('capability folders');
+    });
+
     it('should show dependencies with completion status', () => {
       const context = loadChangeContext(tempDir, 'my-change');
       const instructions = generateInstructions(context, 'specs');
@@ -572,6 +589,7 @@ rules:
       fs.writeFileSync(path.join(changeDir, 'proposal.md'), '# Proposal');
       fs.writeFileSync(path.join(changeDir, 'specs', 'test.md'), '# Spec');
       fs.writeFileSync(path.join(changeDir, 'design.md'), '# Design');
+      fs.writeFileSync(path.join(changeDir, 'plan.md'), '# Plan');
       fs.writeFileSync(path.join(changeDir, 'tasks.md'), '# Tasks');
 
       const context = loadChangeContext(tempDir, 'my-change');
@@ -585,11 +603,12 @@ rules:
       const context = loadChangeContext(tempDir, 'my-change');
       const status = formatChangeStatus(context);
 
-      // tasks requires specs and design
+      // tasks requires specs, design, and plan
       const tasks = status.artifacts.find(a => a.id === 'tasks');
       expect(tasks?.status).toBe('blocked');
       expect(tasks?.missingDeps).toContain('specs');
       expect(tasks?.missingDeps).toContain('design');
+      expect(tasks?.missingDeps).toContain('plan');
     });
 
     it('should sort artifacts in build order', () => {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  computeQuestionAllocation,
   computeQuestionCount,
   computeSpecStats,
 } from '../../../src/core/comprehension/stats.js';
@@ -55,6 +56,68 @@ describe('comprehension stats', () => {
   });
 });
 
+describe('computeQuestionAllocation', () => {
+  const allPresent = {
+    hasPlan: true,
+    hasProposal: true,
+    hasDesign: true,
+    hasSpecs: true,
+    hasTasks: true,
+  };
+
+  it('gives plan a strict majority when plan exists', () => {
+    for (const total of [5, 7, 8, 10]) {
+      const allocation = computeQuestionAllocation(total, allPresent);
+      const planCount = allocation.plan ?? 0;
+      const others = Object.entries(allocation)
+        .filter(([key]) => key !== 'plan')
+        .map(([, count]) => count ?? 0);
+      expect(planCount).toBe(Math.ceil(total / 2));
+      expect(Math.max(...others, 0)).toBeLessThan(planCount);
+      expect(Object.values(allocation).reduce((sum, n) => sum + (n ?? 0), 0)).toBe(total);
+    }
+  });
+
+  it('matches documented allocation table for all-five present', () => {
+    expect(computeQuestionAllocation(5, allPresent)).toEqual({
+      plan: 3,
+      specs: 1,
+      design: 1,
+    });
+    expect(computeQuestionAllocation(7, allPresent)).toEqual({
+      plan: 4,
+      specs: 1,
+      design: 1,
+      proposal: 1,
+    });
+    expect(computeQuestionAllocation(8, allPresent)).toEqual({
+      plan: 4,
+      specs: 1,
+      design: 1,
+      proposal: 1,
+      tasks: 1,
+    });
+    expect(computeQuestionAllocation(10, allPresent)).toEqual({
+      plan: 5,
+      specs: 2,
+      design: 1,
+      proposal: 1,
+      tasks: 1,
+    });
+  });
+
+  it('falls back to even split when plan is absent', () => {
+    const allocation = computeQuestionAllocation(5, {
+      hasProposal: true,
+      hasDesign: true,
+      hasSpecs: true,
+      hasTasks: true,
+    });
+    expect(allocation.plan).toBeUndefined();
+    expect(Object.values(allocation).reduce((sum, n) => sum + (n ?? 0), 0)).toBe(5);
+  });
+});
+
 describe('computeSpecStats from files', () => {
   it('computes stats from spec file paths', async () => {
     const { mkdtemp, writeFile, rm } = await import('node:fs/promises');
@@ -65,11 +128,18 @@ describe('computeSpecStats from files', () => {
     const specPath = join(dir, 'auth.md');
     await writeFile(specPath, DELTA_SPEC);
 
-    const stats = computeSpecStats([specPath], DEFAULT_COMPREHENSION_CONFIG);
+    const stats = computeSpecStats([specPath], DEFAULT_COMPREHENSION_CONFIG, 0, {
+      hasPlan: true,
+      hasProposal: true,
+      hasDesign: true,
+      hasSpecs: true,
+    });
     expect(stats.requirementCount).toBe(2);
     expect(stats.scenarioCount).toBe(3);
     expect(stats.questionCount).toBeGreaterThanOrEqual(5);
     expect(stats.questionCount).toBeLessThanOrEqual(10);
+    expect(stats.optionsPerQuestion).toBe(3);
+    expect(stats.questionAllocation.plan).toBeGreaterThan(0);
 
     await rm(dir, { recursive: true, force: true });
   });

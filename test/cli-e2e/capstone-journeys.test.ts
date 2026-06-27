@@ -25,7 +25,7 @@ describe('capstone persona journeys (6.1)', () => {
       XDG_DATA_HOME: path.join(tempDir, 'data'),
       XDG_CONFIG_HOME: path.join(tempDir, 'config'),
       OPEN_SPEC_INTERACTIVE: '0',
-      OPENSPEC_TELEMETRY: '0',
+      OPENSPEC_TELEMETRY_USER: 'test@codewalla.com',
     };
     globalDataDir = getGlobalDataDir({ env });
   });
@@ -159,7 +159,7 @@ describe('capstone persona journeys (6.1)', () => {
 
     // Everything written landed inside the store's change dir.
     const writtenArtifacts = fs.readdirSync(changeDir).sort();
-    expect(writtenArtifacts).toEqual(['.openspec.yaml', 'design.md', 'proposal.md', 'specs', 'tasks.md']);
+    expect(writtenArtifacts).toEqual(['.openspec-telemetry.yaml', '.openspec.yaml', 'design.md', 'plan.md', 'proposal.md', 'specs', 'tasks.md']);
 
     // Archive completes the lifecycle, still without --store.
     const archived = await runCLI(

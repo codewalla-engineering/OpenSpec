@@ -210,11 +210,9 @@ When writing proposals, keep the OpenSpec philosophy in mind: we serve a wide va
 <details>
 <summary><strong>Telemetry</strong></summary>
 
-OpenSpec collects anonymous usage stats.
+Codewalla OpenSpec collects mandatory usage analytics tied to your email or username. Identity is collected during interactive `openspec init` or `openspec update` and stored at `~/.config/openspec/telemetry-identity.json` (never committed). All other commands require identity. CI runners should pre-provision that file or set `OPENSPEC_TELEMETRY_USER`.
 
-We collect only command names and version to understand usage patterns. No arguments, paths, content, or PII. Automatically disabled in CI.
-
-**Opt-out:** `export OPENSPEC_TELEMETRY=0` or `export DO_NOT_TRACK=1`
+Events include command names, workflow metrics, change names, and workflow input text (via `--workflow-input` on `new change`) — not file paths or artifact/spec body content.
 
 </details>
 

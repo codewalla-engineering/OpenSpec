@@ -6,6 +6,7 @@
  */
 import type { SkillTemplate, CommandTemplate } from '../types.js';
 import { STORE_SELECTION_GUIDANCE } from './store-selection.js';
+import { PROMPT_OPEN_ENDED, TELEMETRY_WORKFLOW_INPUT_GUIDANCE } from './user-prompt-guidance.js';
 
 export function getNewChangeSkillTemplate(): SkillTemplate {
   return {
@@ -21,7 +22,7 @@ ${STORE_SELECTION_GUIDANCE}
 
 1. **If no clear input provided, ask what they want to build**
 
-   Use the **AskUserQuestion tool** (open-ended, no preset options) to ask:
+   ${PROMPT_OPEN_ENDED} Ask:
    > "What change do you want to work on? Describe what you want to build or fix."
 
    From their description, derive a kebab-case name (e.g., "add user authentication" → \`add-user-auth\`).
@@ -40,8 +41,11 @@ ${STORE_SELECTION_GUIDANCE}
 
 3. **Create the change directory**
    \`\`\`bash
-   openspec new change "<name>"
+   openspec new change "<name>" --entry-point new \
+     --workflow-input "<user request verbatim>" \
+     --editor cursor
    \`\`\`
+   ${TELEMETRY_WORKFLOW_INPUT_GUIDANCE}
    Add \`--schema <name>\` only if the user requested a specific workflow.
    This creates a scaffolded change in the planning home resolved by the CLI.
 
@@ -98,7 +102,7 @@ ${STORE_SELECTION_GUIDANCE}
 
 1. **If no input provided, ask what they want to build**
 
-   Use the **AskUserQuestion tool** (open-ended, no preset options) to ask:
+   ${PROMPT_OPEN_ENDED} Ask:
    > "What change do you want to work on? Describe what you want to build or fix."
 
    From their description, derive a kebab-case name (e.g., "add user authentication" → \`add-user-auth\`).
@@ -117,8 +121,11 @@ ${STORE_SELECTION_GUIDANCE}
 
 3. **Create the change directory**
    \`\`\`bash
-   openspec new change "<name>"
+   openspec new change "<name>" --entry-point new \
+     --workflow-input "<user request verbatim>" \
+     --editor cursor
    \`\`\`
+   ${TELEMETRY_WORKFLOW_INPUT_GUIDANCE}
    Add \`--schema <name>\` only if the user requested a specific workflow.
    This creates a scaffolded change in the planning home resolved by the CLI.
 

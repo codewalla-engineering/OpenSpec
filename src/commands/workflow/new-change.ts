@@ -9,6 +9,13 @@
 
 import ora from 'ora';
 import path from 'path';
+import {
+  trackWorkflowStarted,
+  trackCommandFailed,
+  normalizeEditor,
+  resolveWorkflowInputAsync,
+  type EntryPoint,
+} from '../../telemetry/index.js';
 import { createChange, validateChangeName } from '../../utils/change-utils.js';
 import { formatChangeLocation } from '../../core/planning-home.js';
 import {
@@ -17,9 +24,9 @@ import {
   toPlanningHome,
   toRootOutput,
   withStoreFlag,
+  isStoreSelectedRoot,
   type ResolvedOpenSpecRoot,
   type RootOutput,
-  isStoreSelectedRoot,
 } from '../../core/root-selection.js';
 import { printJson, statusFromError, validateSchemaExists } from './shared.js';
 
@@ -35,6 +42,10 @@ export interface NewChangeOptions {
   storePath?: string;
   initiative?: string;
   areas?: string;
+  entryPoint?: string;
+  workflowInput?: string;
+  workflowInputFile?: string;
+  editor?: string;
   json?: boolean;
 }
 
@@ -46,6 +57,16 @@ interface NewChangeOutput {
     schema: string;
   };
   root: RootOutput;
+}
+
+const VALID_ENTRY_POINTS = new Set<EntryPoint>(['propose', 'new', 'ff', 'manual']);
+
+function resolveEntryPoint(value?: string): EntryPoint {
+  const normalized = (value ?? 'manual').toLowerCase();
+  if (VALID_ENTRY_POINTS.has(normalized as EntryPoint)) {
+    return normalized as EntryPoint;
+  }
+  throw new Error(`Invalid --entry-point "${value}". Use: propose, new, ff, or manual.`);
 }
 
 // -----------------------------------------------------------------------------
@@ -74,8 +95,6 @@ function printCreatedChangeHuman(
   payload: NewChangeOutput,
   root: ResolvedOpenSpecRoot
 ): void {
-  // A relative path is only honest when the root is where the user
-  // stands; a distant ancestor root gets the absolute path.
   const location =
     !isStoreSelectedRoot(root) && root.path === process.cwd()
       ? formatChangeLocation(toPlanningHome(root), payload.change.id)
@@ -109,8 +128,13 @@ export async function newChangeCommand(name: string | undefined, options: NewCha
     }
 
     const projectRoot = root.path;
+    const entryPoint = resolveEntryPoint(options.entryPoint);
+    const editor = normalizeEditor(options.editor);
+    const workflowInput = await resolveWorkflowInputAsync({
+      workflowInput: options.workflowInput,
+      workflowInputFile: options.workflowInputFile,
+    });
 
-    // Validate schema if provided
     if (options.schema) {
       validateSchemaExists(options.schema, projectRoot);
     }
@@ -129,12 +153,24 @@ export async function newChangeCommand(name: string | undefined, options: NewCha
       },
     });
 
-    // If description provided, create README.md with description
     if (options.description) {
       const { promises: fs } = await import('fs');
       const readmePath = path.join(result.changeDir, 'README.md');
       await fs.writeFile(readmePath, `# ${name}\n\n${options.description}\n`, 'utf-8');
     }
+
+    await trackWorkflowStarted({
+      changeDir: result.changeDir,
+      changeName: name,
+      schema: result.schema,
+      entryPoint,
+      storeSelected: isStoreSelectedRoot(root),
+      projectRoot,
+      workflowInput,
+      description: options.description,
+      goal: options.goal,
+      editor,
+    });
 
     const payload: NewChangeOutput = {
       change: {
@@ -154,6 +190,7 @@ export async function newChangeCommand(name: string | undefined, options: NewCha
     spinner?.stop();
     printCreatedChangeHuman(payload, root);
   } catch (error) {
+    await trackCommandFailed('new_change', error);
     spinner?.stop();
     if (options.json) {
       printJson({

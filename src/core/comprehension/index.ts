@@ -1,6 +1,6 @@
 import type { ProjectConfig } from '../project-config.js';
 import { resolveComprehensionConfig, type ComprehensionConfig } from './config.js';
-import { fingerprintSpecFiles } from './fingerprint.js';
+import { fingerprintApplyArtifacts } from './fingerprint.js';
 import {
   buildPassRecord,
   deleteSessionRecord,
@@ -9,14 +9,19 @@ import {
   writePassRecord,
   type ComprehensionPassRecord,
 } from './pass-record.js';
-import { computeSpecStats } from './stats.js';
+import {
+  computeSpecStats,
+  OPTIONS_PER_QUESTION,
+  type ArtifactPresence,
+  type QuestionAllocation,
+} from './stats.js';
 
 export {
   DEFAULT_COMPREHENSION_CONFIG,
   resolveComprehensionConfig,
   type ComprehensionConfig,
 } from './config.js';
-export { fingerprintSpecFiles } from './fingerprint.js';
+export { fingerprintApplyArtifacts, fingerprintSpecFiles } from './fingerprint.js';
 export {
   COMPREHENSION_PASS_FILENAME,
   COMPREHENSION_SESSION_FILENAME,
@@ -27,7 +32,17 @@ export {
   writePassRecord,
   type ComprehensionPassRecord,
 } from './pass-record.js';
-export { computeQuestionCount, computeSpecStats, countSpecStats, type SpecStats } from './stats.js';
+export {
+  computeQuestionAllocation,
+  computeQuestionCount,
+  computeSpecStats,
+  countSpecStats,
+  OPTIONS_PER_QUESTION,
+  type ArtifactPresence,
+  type QuestionAllocation,
+  type QuestionCategory,
+  type SpecStats,
+} from './stats.js';
 
 export interface ComprehensionGateInfo {
   required: boolean;
@@ -35,6 +50,8 @@ export interface ComprehensionGateInfo {
   thresholdPercent: number;
   bestScorePercent?: number;
   questionCount: number;
+  questionAllocation: QuestionAllocation;
+  optionsPerQuestion: number;
   requirementCount: number;
   scenarioCount: number;
   pendingTaskCount: number;
@@ -43,7 +60,9 @@ export interface ComprehensionGateInfo {
 
 export interface ComprehensionGateOptions {
   tasksPath?: string | null;
+  planPath?: string | null;
   pendingTaskCount?: number;
+  artifactPresence?: ArtifactPresence;
 }
 
 export interface ComprehensionGateResult {
@@ -64,6 +83,8 @@ export function checkComprehensionGate(
   const config = resolveComprehensionConfig(projectConfig);
   const pendingTaskCount = gateOptions.pendingTaskCount ?? 0;
   const tasksPath = gateOptions.tasksPath ?? null;
+  const planPath = gateOptions.planPath ?? null;
+  const artifactPresence = gateOptions.artifactPresence ?? {};
 
   if (!config.enabled) {
     return { active: false, passed: true };
@@ -73,12 +94,12 @@ export function checkComprehensionGate(
     return { active: false, passed: true };
   }
 
-  const stats = computeSpecStats(specPaths, config, pendingTaskCount);
+  const stats = computeSpecStats(specPaths, config, pendingTaskCount, artifactPresence);
   if (stats.requirementCount === 0) {
     return { active: false, passed: true };
   }
 
-  const fingerprint = fingerprintSpecFiles(specPaths, tasksPath);
+  const fingerprint = fingerprintApplyArtifacts({ specPaths, tasksPath, planPath });
   const record = readPassRecord(changeDir);
   const passed = isPassValid(record, fingerprint);
 
@@ -87,6 +108,8 @@ export function checkComprehensionGate(
     passed,
     thresholdPercent: config.thresholdPercent,
     questionCount: stats.questionCount,
+    questionAllocation: stats.questionAllocation,
+    optionsPerQuestion: stats.optionsPerQuestion,
     requirementCount: stats.requirementCount,
     scenarioCount: stats.scenarioCount,
     pendingTaskCount: stats.pendingTaskCount,
@@ -118,11 +141,13 @@ export function recordComprehensionPass(input: {
   changeDir: string;
   specPaths: string[];
   tasksPath?: string | null;
+  planPath?: string | null;
   projectConfig: ProjectConfig | null | undefined;
   scorePercent: number;
   attempt: number;
   questionCount: number;
   pendingTaskCount?: number;
+  artifactPresence?: ArtifactPresence;
 }): ComprehensionPassRecord {
   const config = resolveComprehensionConfig(input.projectConfig);
 
@@ -137,9 +162,18 @@ export function recordComprehensionPass(input: {
   const stats =
     input.questionCount > 0
       ? { questionCount: input.questionCount }
-      : computeSpecStats(input.specPaths, config, input.pendingTaskCount ?? 0);
+      : computeSpecStats(
+          input.specPaths,
+          config,
+          input.pendingTaskCount ?? 0,
+          input.artifactPresence ?? {}
+        );
 
-  const fingerprint = fingerprintSpecFiles(input.specPaths, input.tasksPath);
+  const fingerprint = fingerprintApplyArtifacts({
+    specPaths: input.specPaths,
+    tasksPath: input.tasksPath,
+    planPath: input.planPath,
+  });
   const record = buildPassRecord({
     scorePercent: input.scorePercent,
     thresholdPercent: config.thresholdPercent,
@@ -152,3 +186,5 @@ export function recordComprehensionPass(input: {
   deleteSessionRecord(input.changeDir);
   return record;
 }
+
+export { OPTIONS_PER_QUESTION as comprehensionOptionsPerQuestion };

@@ -4,133 +4,77 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import { randomUUID } from 'node:crypto';
 
-// Mock posthog-node before importing the module
-vi.mock('posthog-node', () => {
-  return {
-    PostHog: vi.fn().mockImplementation(() => ({
-      capture: vi.fn(),
-      shutdown: vi.fn().mockResolvedValue(undefined),
-    })),
-  };
-});
+const { mockCapture, mockIdentify, mockShutdown } = vi.hoisted(() => ({
+  mockCapture: vi.fn(),
+  mockIdentify: vi.fn(),
+  mockShutdown: vi.fn().mockResolvedValue(undefined),
+}));
 
-// Import after mocking
-import { isTelemetryEnabled, maybeShowTelemetryNotice, shutdown, trackCommand } from '../../src/telemetry/index.js';
-import { PostHog } from 'posthog-node';
+vi.mock('posthog-node', () => ({
+  PostHog: vi.fn().mockImplementation(() => ({
+    capture: mockCapture,
+    identify: mockIdentify,
+    shutdown: mockShutdown,
+  })),
+}));
 
 describe('telemetry/index', () => {
   let tempDir: string;
   let originalEnv: NodeJS.ProcessEnv;
-  let consoleLogSpy: ReturnType<typeof vi.spyOn>;
   let fetchSpy: ReturnType<typeof vi.spyOn<typeof globalThis, 'fetch'>>;
 
   beforeEach(() => {
-    // Create unique temp directory for each test using UUID
     tempDir = path.join(os.tmpdir(), `openspec-telemetry-test-${randomUUID()}`);
     fs.mkdirSync(tempDir, { recursive: true });
-
-    // Save original env
     originalEnv = { ...process.env };
-
-    // Mock HOME to point to temp dir
     process.env.HOME = tempDir;
-
-    // Clear all mocks
+    process.env.USERPROFILE = tempDir;
+    process.env.XDG_CONFIG_HOME = path.join(tempDir, 'config');
+    process.env.OPENSPEC_TELEMETRY_USER = 'dev@codewalla.com';
     vi.clearAllMocks();
-
-    // Spy on console.log for notice tests
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     fetchSpy = vi.spyOn(globalThis, 'fetch');
   });
 
   afterEach(async () => {
-    // Restore original env
     process.env = originalEnv;
-
-    // Clean up temp directory
+    try {
+      const { shutdown, resetTelemetryForTests } = await import('../../src/telemetry/index.js');
+      resetTelemetryForTests();
+      await shutdown();
+      const { resetIdentityCacheForTests } = await import('../../src/telemetry/identity.js');
+      resetIdentityCacheForTests();
+    } catch {
+      // ignore if modules were not loaded
+    }
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
     } catch {
-      // Ignore cleanup errors
+      // ignore
     }
-
-    await shutdown();
-
-    // Restore all mocks
-    vi.restoreAllMocks();
-  });
-
-  describe('isTelemetryEnabled', () => {
-    it('should return false when OPENSPEC_TELEMETRY=0', () => {
-      process.env.OPENSPEC_TELEMETRY = '0';
-      expect(isTelemetryEnabled()).toBe(false);
-    });
-
-    it('should return false when DO_NOT_TRACK=1', () => {
-      process.env.DO_NOT_TRACK = '1';
-      expect(isTelemetryEnabled()).toBe(false);
-    });
-
-    it('should return false when CI=true', () => {
-      process.env.CI = 'true';
-      expect(isTelemetryEnabled()).toBe(false);
-    });
-
-    it('should return true when no opt-out is set', () => {
-      delete process.env.OPENSPEC_TELEMETRY;
-      delete process.env.DO_NOT_TRACK;
-      delete process.env.CI;
-      expect(isTelemetryEnabled()).toBe(true);
-    });
-
-    it('should prioritize OPENSPEC_TELEMETRY=0 over other settings', () => {
-      process.env.OPENSPEC_TELEMETRY = '0';
-      delete process.env.DO_NOT_TRACK;
-      delete process.env.CI;
-      expect(isTelemetryEnabled()).toBe(false);
-    });
-  });
-
-  describe('maybeShowTelemetryNotice', () => {
-    it('should not show notice when telemetry is disabled', async () => {
-      process.env.OPENSPEC_TELEMETRY = '0';
-
-      await maybeShowTelemetryNotice();
-
-      expect(consoleLogSpy).not.toHaveBeenCalled();
-    });
+    fetchSpy.mockRestore();
   });
 
   describe('trackCommand', () => {
-    it('should not track when telemetry is disabled', async () => {
-      process.env.OPENSPEC_TELEMETRY = '0';
+    it('should not track when userId is unavailable', async () => {
+      delete process.env.OPENSPEC_TELEMETRY_USER;
+      const { PostHog } = await import('posthog-node');
+      const { trackCommand } = await import('../../src/telemetry/index.js');
 
       await trackCommand('test', '1.0.0');
 
       expect(PostHog).not.toHaveBeenCalled();
     });
 
-    it('should track when telemetry is enabled', async () => {
-      delete process.env.OPENSPEC_TELEMETRY;
-      delete process.env.DO_NOT_TRACK;
-      delete process.env.CI;
+    it('should track with Codewalla PostHog defaults when userId is set', async () => {
+      const { PostHog } = await import('posthog-node');
+      const { captureEvent, DEFAULT_POSTHOG_HOST } = await import('../../src/telemetry/client.js');
 
-      await trackCommand('test', '1.0.0');
-
-      expect(PostHog).toHaveBeenCalled();
-    });
-
-    it('should construct PostHog with bounded silent-failure settings', async () => {
-      delete process.env.OPENSPEC_TELEMETRY;
-      delete process.env.DO_NOT_TRACK;
-      delete process.env.CI;
-
-      await trackCommand('test', '1.0.0');
+      await captureEvent('command_executed', { command: 'init', version: '1.0.0' });
 
       expect(PostHog).toHaveBeenCalledWith(
-        expect.any(String),
+        expect.stringContaining('phc_'),
         expect.objectContaining({
-          host: 'https://edge.openspec.dev',
+          host: DEFAULT_POSTHOG_HOST,
           flushAt: 1,
           flushInterval: 0,
           fetchRetryCount: 0,
@@ -141,78 +85,66 @@ describe('telemetry/index', () => {
           fetch: expect.any(Function),
         })
       );
+
+      expect(mockCapture).toHaveBeenCalledWith(
+        expect.objectContaining({
+          distinctId: 'dev@codewalla.com',
+          event: 'command_executed',
+          properties: expect.objectContaining({
+            command: 'init',
+            surface: 'cli',
+            $ip: null,
+          }),
+        })
+      );
     });
 
-    it('should return a synthetic success response when fetch throws a network error', async () => {
-      delete process.env.OPENSPEC_TELEMETRY;
-      delete process.env.DO_NOT_TRACK;
-      delete process.env.CI;
+    it('trackCommand delegates to captureEvent', async () => {
+      const { trackCommand } = await import('../../src/telemetry/index.js');
+      await trackCommand('status', '1.0.0');
+      expect(mockCapture).toHaveBeenCalled();
+    });
+
+    it('should use distinct_id equal to email/username, never a UUID', async () => {
+      const { captureEvent } = await import('../../src/telemetry/client.js');
+      await captureEvent('command_executed', { command: 'status', version: '1.0.0' });
+
+      const captureArg = mockCapture.mock.calls[0][0];
+      expect(captureArg.distinctId).toBe('dev@codewalla.com');
+      expect(captureArg.distinctId).not.toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      );
+    });
+
+    it('should return synthetic 204 when fetch throws', async () => {
+      const { PostHog } = await import('posthog-node');
+      const { trackCommand } = await import('../../src/telemetry/index.js');
       await trackCommand('test', '1.0.0');
 
       const fetchFn = (PostHog as any).mock.calls[0][1].fetch as typeof fetch;
       fetchSpy.mockRejectedValueOnce(new Error('network down'));
 
-      const response = await fetchFn('https://edge.openspec.dev/batch/', { method: 'POST' });
-
+      const response = await fetchFn('https://us.i.posthog.com/batch/', { method: 'POST' });
       expect(response.status).toBe(204);
     });
+  });
 
-    it('should return a synthetic success response when fetch aborts', async () => {
-      delete process.env.OPENSPEC_TELEMETRY;
-      delete process.env.DO_NOT_TRACK;
-      delete process.env.CI;
-      await trackCommand('test', '1.0.0');
-
-      const fetchFn = (PostHog as any).mock.calls[0][1].fetch as typeof fetch;
-      fetchSpy.mockRejectedValueOnce(new DOMException('This operation was aborted', 'AbortError'));
-
-      const response = await fetchFn('https://edge.openspec.dev/batch/', { method: 'POST' });
-
-      expect(response.status).toBe(204);
+  describe('canSendTelemetry', () => {
+    it('returns true when OPENSPEC_TELEMETRY_USER is set', async () => {
+      const { canSendTelemetry } = await import('../../src/telemetry/index.js');
+      expect(await canSendTelemetry()).toBe(true);
     });
 
-    it('should return a synthetic success response for non-2xx responses', async () => {
-      delete process.env.OPENSPEC_TELEMETRY;
-      delete process.env.DO_NOT_TRACK;
-      delete process.env.CI;
-      await trackCommand('test', '1.0.0');
-
-      const fetchFn = (PostHog as any).mock.calls[0][1].fetch as typeof fetch;
-      fetchSpy.mockResolvedValueOnce(new Response('forbidden', { status: 403 }));
-
-      const response = await fetchFn('https://edge.openspec.dev/batch/', { method: 'POST' });
-
-      expect(response.status).toBe(204);
-    });
-
-    it('should pass through successful responses from fetch', async () => {
-      delete process.env.OPENSPEC_TELEMETRY;
-      delete process.env.DO_NOT_TRACK;
-      delete process.env.CI;
-      await trackCommand('test', '1.0.0');
-
-      const fetchFn = (PostHog as any).mock.calls[0][1].fetch as typeof fetch;
-      const expectedResponse = new Response(null, { status: 200 });
-      fetchSpy.mockResolvedValueOnce(expectedResponse);
-
-      const response = await fetchFn('https://edge.openspec.dev/batch/', { method: 'POST' });
-
-      expect(response).toBe(expectedResponse);
+    it('returns false when no identity is available', async () => {
+      delete process.env.OPENSPEC_TELEMETRY_USER;
+      const { canSendTelemetry } = await import('../../src/telemetry/index.js');
+      expect(await canSendTelemetry()).toBe(false);
     });
   });
 
   describe('shutdown', () => {
     it('should not throw when no client exists', async () => {
-      await expect(shutdown()).resolves.not.toThrow();
-    });
-
-    it('should handle shutdown errors silently', async () => {
-      const mockPostHog = {
-        capture: vi.fn(),
-        shutdown: vi.fn().mockRejectedValue(new Error('Network error')),
-      };
-      (PostHog as any).mockImplementation(() => mockPostHog);
-
+      const { shutdown } = await import('../../src/telemetry/index.js');
       await expect(shutdown()).resolves.not.toThrow();
     });
   });

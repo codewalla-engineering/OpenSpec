@@ -7,6 +7,7 @@
 import type { SkillTemplate, CommandTemplate } from '../types.js';
 import { PLAYWRIGHT_VERIFY_GUIDANCE } from './mcp-guidance.js';
 import { STORE_SELECTION_GUIDANCE } from './store-selection.js';
+import { PROMPT_SELECT_CHANGE } from './user-prompt-guidance.js';
 
 export function getVerifyChangeSkillTemplate(): SkillTemplate {
   return {
@@ -22,7 +23,7 @@ ${STORE_SELECTION_GUIDANCE}
 
 1. **If no change name provided, prompt for selection**
 
-   Run \`openspec list --json\` to get available changes. Use the **AskUserQuestion tool** to let the user select.
+   ${PROMPT_SELECT_CHANGE}
 
    Show changes that have implementation tasks (tasks artifact exists).
    Include the schema used for each change if available.
@@ -197,7 +198,7 @@ ${STORE_SELECTION_GUIDANCE}
 
 1. **If no change name provided, prompt for selection**
 
-   Run \`openspec list --json\` to get available changes. Use the **AskUserQuestion tool** to let the user select.
+   ${PROMPT_SELECT_CHANGE}
 
    Show changes that have implementation tasks (tasks artifact exists).
    Include the schema used for each change if available.

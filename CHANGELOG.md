@@ -1,5 +1,41 @@
 # @codewalla_india/openspec
 
+## 1.1.0
+
+### Minor Changes
+
+- ### New Features
+
+  - **Identified telemetry** — Usage analytics now use your email or username as the PostHog distinct ID. Identity is collected during interactive `openspec init` or `openspec update` and stored at `~/.config/openspec/telemetry-identity.json` (mode 0600, never committed).
+  - **Workflow funnel tracking** — Correlated events (`workflow_started`, `change_proposal_ready`, `apply_ready`, `change_archived`) measure change lifecycle completion, including optional `--workflow-input`, `--editor`, and comprehension gate outcomes.
+  - **Expanded CLI instrumentation** — Store setup/register/remove, workset create/open/remove, validation, config changes, and feedback submission now emit dedicated PostHog events.
+
+  ### Breaking Changes
+
+  - **Identity required** — All commands except `init` and `update` exit with `telemetry_identity_required` when no identity is configured. CI runners must pre-provision `~/.config/openspec/telemetry-identity.json` or set `OPENSPEC_TELEMETRY_USER`.
+  - **Anonymous opt-out removed** — `OPENSPEC_TELEMETRY=0`, `DO_NOT_TRACK=1`, and CI auto-disable no longer skip telemetry; identity gating replaces the previous anonymous model.
+
+  ### Other
+
+  - PostHog client reads `POSTHOG_API_KEY` and `POSTHOG_HOST` from the environment; events send immediately with `$ip: null` and exclude file paths, artifact content, and stack traces.
+
+## 1.0.6
+
+### Patch Changes
+
+- **Jira vs spec naming** — Clarify that Jira ticket keys belong in proposal Impact and change names for traceability, not in capability spec folder names. `/opsx:propose` guidance, spec-driven schema instructions, and proposal template now direct agents to map Jira acceptance criteria into domain-based specs (e.g., `specs/ui/spec.md`, not `specs/cw-1234/`).
+- Document Jira integration in the workflows guide, including safe multi-ticket references and parallel changes on the same capability.
+
+## 1.0.5
+
+### Patch Changes
+
+- Add mandatory **`plan.md`** to the default spec-driven workflow (`proposal → specs → design → plan → tasks`). Apply requires both `plan.md` and `tasks.md`.
+- Comprehension quiz: plan-heavy **`questionAllocation`** in apply JSON, **3 options** per question, and fingerprint invalidation when `plan.md` changes.
+- fix(adapters): escape carriage returns in generated YAML frontmatter via shared `command-generation/yaml.ts`.
+
+**Breaking:** Existing changes with `tasks.md` but no `plan.md` are blocked until a plan is added.
+
 ## 1.4.1
 
 ### Patch Changes

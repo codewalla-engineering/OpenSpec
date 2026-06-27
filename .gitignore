@@ -160,4 +160,7 @@ opencode.json
 # Bob
 .bob/
 .cursor/...
+
+# Codewalla telemetry identity (project-local fallback — primary is ~/.config/openspec/)
+.openspec/telemetry-identity
 .windsurf/...

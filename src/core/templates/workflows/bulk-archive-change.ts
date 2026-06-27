@@ -6,6 +6,7 @@
  */
 import type { SkillTemplate, CommandTemplate } from '../types.js';
 import { STORE_SELECTION_GUIDANCE } from './store-selection.js';
+import { PROMPT_CONFIRM, PROMPT_MULTI_SELECT_CHANGES } from './user-prompt-guidance.js';
 
 export function getBulkArchiveChangeSkillTemplate(): SkillTemplate {
   return {
@@ -29,7 +30,7 @@ ${STORE_SELECTION_GUIDANCE}
 
 2. **Prompt for change selection**
 
-   Use **AskUserQuestion tool** with multi-select to let user choose changes:
+   ${PROMPT_MULTI_SELECT_CHANGES}
    - Show each change with its schema
    - Include an option for "All changes"
    - Allow any number of selections (1+ works, 2+ is the typical use case)
@@ -110,7 +111,7 @@ ${STORE_SELECTION_GUIDANCE}
 
 7. **Confirm batch operation**
 
-   Use **AskUserQuestion tool** with a single confirmation:
+   ${PROMPT_CONFIRM}
 
    - "Archive N changes?" with options based on status
    - Options might include:
@@ -278,7 +279,7 @@ ${STORE_SELECTION_GUIDANCE}
 
 2. **Prompt for change selection**
 
-   Use **AskUserQuestion tool** with multi-select to let user choose changes:
+   ${PROMPT_MULTI_SELECT_CHANGES}
    - Show each change with its schema
    - Include an option for "All changes"
    - Allow any number of selections (1+ works, 2+ is the typical use case)
@@ -359,7 +360,7 @@ ${STORE_SELECTION_GUIDANCE}
 
 7. **Confirm batch operation**
 
-   Use **AskUserQuestion tool** with a single confirmation:
+   ${PROMPT_CONFIRM}
 
    - "Archive N changes?" with options based on status
    - Options might include:

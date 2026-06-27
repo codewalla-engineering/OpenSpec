@@ -23,7 +23,7 @@ describe('declared store fallback (3.2)', () => {
       XDG_DATA_HOME: path.join(tempDir, 'data'),
       XDG_CONFIG_HOME: path.join(tempDir, 'config'),
       OPEN_SPEC_INTERACTIVE: '0',
-      OPENSPEC_TELEMETRY: '0',
+      OPENSPEC_TELEMETRY_USER: 'test@codewalla.com',
     };
     globalDataDir = getGlobalDataDir({ env });
 

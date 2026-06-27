@@ -6,6 +6,7 @@ import { execSync, execFileSync } from 'child_process';
 vi.mock('child_process', () => ({
   execSync: vi.fn(),
   execFileSync: vi.fn(),
+  execFile: vi.fn(),
 }));
 
 describe('FeedbackCommand', () => {

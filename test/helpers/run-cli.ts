@@ -84,6 +84,7 @@ export async function runCLI(args: string[] = [], options: RunCLIOptions = {}): 
       env: {
         ...process.env,
         OPEN_SPEC_INTERACTIVE: '0',
+        POSTHOG_HOST: 'http://127.0.0.1:1',
         ...options.env,
       },
       stdio: ['pipe', 'pipe', 'pipe'],

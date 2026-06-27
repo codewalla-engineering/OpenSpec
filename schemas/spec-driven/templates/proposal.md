@@ -21,3 +21,4 @@
 ## Impact
 
 <!-- Affected code, APIs, dependencies, systems -->
+<!-- If this change maps to a Jira ticket, note it here (e.g., Jira: CW-1234). Do NOT use the ticket key as a capability name. -->

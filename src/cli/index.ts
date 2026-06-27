@@ -37,7 +37,7 @@ import {
   type SchemasOptions,
   type NewChangeOptions,
 } from '../commands/workflow/index.js';
-import { maybeShowTelemetryNotice, trackCommand, shutdown } from '../telemetry/index.js';
+import { requireTelemetryIdentity, TelemetryIdentityRequiredError, trackCommand, shutdown } from '../telemetry/index.js';
 import { COMMON_FLAGS } from '../core/completions/shared-flags.js';
 
 const STORE_OPTION_DESCRIPTION = COMMON_FLAGS.store.description;
@@ -103,6 +103,40 @@ export function getCommandPath(command: Command): string {
   return names.join(':') || 'openspec';
 }
 
+function commandUsesJson(command: Command): boolean {
+  let current: Command | null = command;
+  while (current) {
+    if (current.opts()?.json === true) {
+      return true;
+    }
+    current = current.parent;
+  }
+  return false;
+}
+
+function exitTelemetryIdentityRequired(error: TelemetryIdentityRequiredError, json: boolean): never {
+  if (json) {
+    console.log(
+      JSON.stringify(
+        {
+          status: [
+            {
+              severity: 'error',
+              code: error.code,
+              message: error.message,
+            },
+          ],
+        },
+        null,
+        2
+      )
+    );
+  } else {
+    console.error(`Error: ${error.message}`);
+  }
+  process.exit(1);
+}
+
 program
   .name('openspec')
   .description('AI-native system for spec-driven development')
@@ -121,11 +155,20 @@ program.hook('preAction', async (thisCommand, actionCommand) => {
     process.env.NO_COLOR = '1';
   }
 
-  // Show first-run telemetry notice (if not seen)
-  await maybeShowTelemetryNotice();
-
-  // Track command execution (use actionCommand to get the actual subcommand)
   const commandPath = getCommandPath(actionCommand);
+  const isBootstrap = commandPath === 'init' || commandPath === 'update';
+
+  if (!isBootstrap) {
+    try {
+      await requireTelemetryIdentity();
+    } catch (error) {
+      if (error instanceof TelemetryIdentityRequiredError) {
+        exitTelemetryIdentityRequired(error, commandUsesJson(actionCommand));
+      }
+      throw error;
+    }
+  }
+
   await trackCommand(commandPath, version);
 });
 
@@ -566,6 +609,10 @@ newCmd
   .option('--description <text>', 'Description to add to README.md')
   .option('--goal <text>', 'Optional goal metadata to store with the change')
   .option('--schema <name>', `Workflow schema to use (default: ${DEFAULT_SCHEMA})`)
+  .option('--entry-point <point>', 'Workflow entry point (propose, new, ff, manual)', 'manual')
+  .option('--workflow-input <text>', 'User workflow intent for telemetry (verbatim chat/slash input)')
+  .option('--workflow-input-file <path>', 'Read workflow intent from a file for telemetry')
+  .option('--editor <tool>', 'AI editor used (cursor, windsurf, claude)')
   .option('--json', 'Output as JSON')
   .option('--store <id>', STORE_OPTION_DESCRIPTION)
   .addOption(hiddenStorePathOption())

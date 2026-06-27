@@ -7,16 +7,18 @@
 import type { SkillTemplate, CommandTemplate } from '../types.js';
 import { ATLASSIAN_PROPOSE_GUIDANCE } from './mcp-guidance.js';
 import { STORE_SELECTION_GUIDANCE } from './store-selection.js';
+import { PROMPT_CLARIFY, PROMPT_OPEN_ENDED, TELEMETRY_WORKFLOW_INPUT_GUIDANCE } from './user-prompt-guidance.js';
 
 export function getOpsxProposeSkillTemplate(): SkillTemplate {
   return {
     name: 'openspec-propose',
-    description: 'Propose a new change with all artifacts generated in one step. Use when the user wants to quickly describe what they want to build and get a complete proposal with design, specs, and tasks ready for implementation.',
+    description: 'Propose a new change with all artifacts generated in one step. Use when the user wants to quickly describe what they want to build and get a complete proposal with design, specs, plan, and tasks ready for implementation.',
     instructions: `Propose a new change - create the change and generate all artifacts in one step.
 
 I'll create a change with artifacts:
 - proposal.md (what & why)
 - design.md (how)
+- plan.md (file-level implementation plan)
 - tasks.md (implementation steps)
 
 When ready to implement, run /opsx:apply
@@ -33,7 +35,7 @@ ${ATLASSIAN_PROPOSE_GUIDANCE}
 
 1. **If no clear input provided, ask what they want to build**
 
-   Use the **AskUserQuestion tool** (open-ended, no preset options) to ask:
+   ${PROMPT_OPEN_ENDED} Ask:
    > "What change do you want to work on? Describe what you want to build or fix."
 
    From their description, derive a kebab-case name (e.g., "add user authentication" → \`add-user-auth\`).
@@ -42,8 +44,11 @@ ${ATLASSIAN_PROPOSE_GUIDANCE}
 
 2. **Create the change directory**
    \`\`\`bash
-   openspec new change "<name>"
+   openspec new change "<name>" --entry-point propose \
+     --workflow-input "<user request verbatim>" \
+     --editor cursor
    \`\`\`
+   ${TELEMETRY_WORKFLOW_INPUT_GUIDANCE}
    This creates a scaffolded change in the planning home resolved by the CLI with \`.openspec.yaml\`.
 
 3. **Get the artifact build order**
@@ -84,7 +89,7 @@ ${ATLASSIAN_PROPOSE_GUIDANCE}
       - Stop when all \`applyRequires\` artifacts are done
 
    c. **If an artifact requires user input** (unclear context):
-      - Use **AskUserQuestion tool** to clarify
+      - ${PROMPT_CLARIFY}
       - Then continue with creation
 
 5. **Show final status**
@@ -133,6 +138,7 @@ export function getOpsxProposeCommandTemplate(): CommandTemplate {
 I'll create a change with artifacts:
 - proposal.md (what & why)
 - design.md (how)
+- plan.md (file-level implementation plan)
 - tasks.md (implementation steps)
 
 When ready to implement, run /opsx:apply
@@ -149,7 +155,7 @@ ${ATLASSIAN_PROPOSE_GUIDANCE}
 
 1. **If no input provided, ask what they want to build**
 
-   Use the **AskUserQuestion tool** (open-ended, no preset options) to ask:
+   ${PROMPT_OPEN_ENDED} Ask:
    > "What change do you want to work on? Describe what you want to build or fix."
 
    From their description, derive a kebab-case name (e.g., "add user authentication" → \`add-user-auth\`).
@@ -158,8 +164,11 @@ ${ATLASSIAN_PROPOSE_GUIDANCE}
 
 2. **Create the change directory**
    \`\`\`bash
-   openspec new change "<name>"
+   openspec new change "<name>" --entry-point propose \
+     --workflow-input "<user request verbatim>" \
+     --editor cursor
    \`\`\`
+   ${TELEMETRY_WORKFLOW_INPUT_GUIDANCE}
    This creates a scaffolded change in the planning home resolved by the CLI with \`.openspec.yaml\`.
 
 3. **Get the artifact build order**
@@ -200,7 +209,7 @@ ${ATLASSIAN_PROPOSE_GUIDANCE}
       - Stop when all \`applyRequires\` artifacts are done
 
    c. **If an artifact requires user input** (unclear context):
-      - Use **AskUserQuestion tool** to clarify
+      - ${PROMPT_CLARIFY}
       - Then continue with creation
 
 5. **Show final status**
