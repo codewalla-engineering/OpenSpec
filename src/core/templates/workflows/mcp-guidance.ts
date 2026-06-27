@@ -60,6 +60,21 @@ export const ATLASSIAN_PROPOSE_GUIDANCE = `0. **Import from Jira (if a ticket ke
    After fetching, proceed to step 1 using the ticket data as pre-filled input.
    Tell the user: "Found CW-1234: '<summary>'. Creating change from Jira ticket."
 
+   **Naming conventions** (Jira tracks work; specs track behavior):
+
+   - **Change name**: kebab-case summary; optionally prefix with lowercase ticket key
+     (e.g., \`cw-1234-add-dark-mode\`). Never use the ticket key alone as the change name.
+   - **Capabilities** (proposal + delta specs): pick domain names from existing
+     \`openspec/specs/\` or derive from behavior (\`ui\`, \`auth\`). **Do NOT** name
+     capabilities or spec folders after the Jira key.
+   - **Acceptance criteria**: map each AC to requirements/scenarios inside the
+     appropriate capability spec—not to a ticket-named spec file.
+   - **Traceability**: record ticket key(s) in proposal **Impact**
+     (e.g., \`Jira: CW-1234\` or \`Jira: CW-100 (epic), CW-1234 (story)\`).
+   - **Follow-up work**: when continuing or splitting ticket work, create a new change
+     folder with a distinct name; reference the same or related tickets in Impact.
+     Do not reuse archived change folders or ticket-key spec folders.
+
    **If no ticket key:** proceed normally from step 1.`;
 
 export const CONTEXT7_LOOKUP_GUIDANCE = `   **Before implementing each task — library check:**

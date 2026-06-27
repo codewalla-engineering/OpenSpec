@@ -124,6 +124,35 @@ AI:  ✓ Merged specs
 
 **Best for:** Small to medium features, bug fixes, straightforward changes.
 
+### Jira integration
+
+When work maps to Jira tickets, OpenSpec separates **work tracking** from **behavior specs**:
+
+| Layer | Naming | Example |
+|-------|--------|---------|
+| Change folder | Optional ticket prefix + summary (kebab-case) | `cw-1234-add-dark-mode` |
+| Proposal Impact | Ticket key for traceability | `Jira: CW-1234` |
+| Spec capability | Behavioral domain only | `ui`, `user-auth` |
+
+**Do not** name spec folders after ticket keys (e.g., `specs/cw-1234/`). Jira acceptance criteria become requirements inside the appropriate capability spec (e.g., `specs/ui/spec.md`).
+
+**Typical flow:**
+
+```text
+You: /opsx:propose CW-1234 add dark mode
+
+AI:  Found CW-1234: 'Add dark mode'. Creating change from Jira ticket...
+     ✓ proposal.md (Impact: Jira: CW-1234)
+     ✓ specs/ui/spec.md (requirements from Jira ACs)
+     ...
+```
+
+**Multiple changes, same ticket:** Safe. Create a new change folder for follow-up work (e.g., `cw-1234-dark-mode-persistence`) and reference the ticket again in Impact. Both changes delta the same capability spec; archive in order.
+
+**Parallel changes, different tickets, same capability:** Also safe — e.g., `cw-1234-add-dark-mode` and `cw-1235-fix-theme-bug` both touch `specs/ui/`. Use bulk archive to merge in chronological order (see Parallel Changes below).
+
+Requires the Atlassian MCP for automatic ticket import during `/opsx:propose` and enrichment during `/opsx:apply`.
+
 ### Exploratory
 
 When requirements are unclear or you need to investigate first:

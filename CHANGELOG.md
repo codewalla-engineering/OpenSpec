@@ -1,5 +1,12 @@
 # @codewalla_india/openspec
 
+## 1.0.6
+
+### Patch Changes
+
+- **Jira vs spec naming** — Clarify that Jira ticket keys belong in proposal Impact and change names for traceability, not in capability spec folder names. `/opsx:propose` guidance, spec-driven schema instructions, and proposal template now direct agents to map Jira acceptance criteria into domain-based specs (e.g., `specs/ui/spec.md`, not `specs/cw-1234/`).
+- Document Jira integration in the workflows guide, including safe multi-ticket references and parallel changes on the same capability.
+
 ## 1.0.5
 
 ### Patch Changes
