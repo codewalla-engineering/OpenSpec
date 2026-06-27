@@ -1,5 +1,19 @@
 # @codewalla_india/openspec
 
+## 1.3.0
+
+### Minor Changes
+
+- ### New Features
+
+  - **`/opsx:modify` command** — Pre-apply planning revision: update `proposal`, `specs`, `design`, `plan`, or `tasks` based on user intent and propagate changes to downstream artifacts in dependency order. Blocked once `/opsx:apply` has started (any tasks checked off).
+  - **`openspec instructions modify`** — CLI hook resolves modify scope, validates pre-apply gates, and returns `artifactsToUpdate` JSON for agents. Supports `--artifact`, `--workflow-input`, and `--editor`.
+  - **Modify telemetry** — Emits `artifact_modify_requested` with `modify_input`, downstream scope, and `modify_history[]` on the change marker; downstream edits continue to emit `artifact_revision_requested` and `artifact_content_changed`.
+
+  ### Other
+
+  - Core profile now includes `modify` (`propose → explore → modify → apply → sync → archive`). Run `openspec update` in your project to install the new slash command.
+
 ## 1.2.0
 
 ### Minor Changes

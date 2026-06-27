@@ -72,7 +72,7 @@ export function buildNextSteps(input: ChangeNextStepsInput): string[] {
       `Run openspec instructions ${readyArtifact.id} --change "${input.changeName}"${storeFlag} --json before writing that artifact.`
     );
   } else if (input.allArtifactsComplete) {
-    steps.push('All planning artifacts are complete; review tasks before implementation.');
+    steps.push('Review planning artifacts; use /opsx:modify to revise or /opsx:apply to implement.');
   }
 
   return steps;

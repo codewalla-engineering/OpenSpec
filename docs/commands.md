@@ -12,6 +12,7 @@ For workflow patterns and when to use each command, see [Workflows](workflows.md
 |---------|---------|
 | `/opsx:propose` | Create a change and generate planning artifacts in one step |
 | `/opsx:explore` | Think through ideas before committing to a change |
+| `/opsx:modify` | Revise planning artifacts before implementation (pre-apply) |
 | `/opsx:apply` | Implement tasks from the change |
 | `/opsx:sync` | Merge delta specs into main specs |
 | `/opsx:archive` | Archive a completed change |
@@ -264,6 +265,52 @@ AI:  Fast-forwarding add-dark-mode...
 - Faster than `/opsx:continue` for straightforward changes
 - You can still edit artifacts afterward
 - Good for small to medium features
+
+---
+
+### `/opsx:modify`
+
+Revise planning artifacts on an existing change **before** implementation. Updates the source artifact (proposal, specs, design, plan, or tasks) based on your request and propagates changes to downstream artifacts in dependency order.
+
+**Pre-apply only:** Do not use after `/opsx:apply` has started (any tasks checked off).
+
+**Syntax:**
+```text
+/opsx:modify [change-name] [artifact] <what to change>
+```
+
+**Arguments:**
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `change-name` | No | Which change to modify (prompted if ambiguous) |
+| `artifact` | No | Source artifact: `proposal`, `specs`, `design`, `plan`, or `tasks` |
+| `what to change` | No | Plain-language modify request |
+
+**What it does:**
+- Validates the change is ready and apply has not started
+- Modifies the requested artifact
+- Refreshes downstream artifacts (e.g., changing `design` updates `plan` and `tasks`)
+- Hands off to `/opsx:apply` when the plan is ready
+
+**Example:**
+```text
+You: /opsx:modify add-dark-mode design use CSS variables instead of hardcoded colors
+
+AI:  Using change: add-dark-mode
+     Will modify: design
+     Downstream: plan, tasks
+
+     ✓ Updated design.md
+     ✓ Updated plan.md
+     ✓ Updated tasks.md
+
+     Run /opsx:apply when ready to implement.
+```
+
+**Tips:**
+- Use after `/opsx:propose` when you want to adjust the plan before writing code
+- Repeat as many times as needed before `/opsx:apply`
+- For mid-implementation edits, edit artifact files manually instead
 
 ---
 

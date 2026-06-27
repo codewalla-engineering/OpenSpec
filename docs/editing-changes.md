@@ -10,7 +10,7 @@ You always have both:
 
 1. **Edit the file directly.** Artifacts are plain Markdown in `openspec/changes/<name>/`. Open `proposal.md`, `design.md`, `tasks.md`, or a delta spec under `specs/` in your editor and change it. Nothing else is required.
 
-2. **Ask your AI to revise it.** In chat, just say what you want: "Update the proposal to drop the caching idea and add a rate-limit section," or "the design should use a queue, not polling." The AI edits the artifact for you, using the rest of the change as context.
+2. **Ask your AI to revise it.** In chat, use `/opsx:modify` before implementation to update an artifact and propagate changes downstream, or describe ad-hoc edits: "Update the proposal to drop the caching idea and add a rate-limit section."
 
 Use whichever fits the moment. Small wording tweak? Edit the file. Substantive rethink? Let the AI revise with full context.
 

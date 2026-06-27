@@ -198,6 +198,47 @@ export async function trackArtifactInstructions(params: {
   await captureEvent('artifact_revision_requested', revisionProps);
 }
 
+export async function trackArtifactModifyRequested(params: {
+  changeDir: string;
+  changeName: string;
+  schema: string;
+  sourceArtifactId: string;
+  downstreamArtifactIds: string[];
+  artifactsToUpdate: string[];
+  modifyInput?: string;
+  editor?: string;
+}): Promise<void> {
+  const modifyInput = params.modifyInput
+    ? sanitizeWorkflowInput(params.modifyInput)
+    : undefined;
+  const now = new Date().toISOString();
+
+  await updateMarker(params.changeDir, (current) => ({
+    ...current,
+    modify_history: [
+      ...(current.modify_history ?? []),
+      {
+        at: now,
+        source_artifact: params.sourceArtifactId,
+        ...(modifyInput ? { modify_input: modifyInput } : {}),
+      },
+    ],
+  }));
+
+  const props = await enrichFromMarker(params.changeDir, {
+    change_name: params.changeName,
+    schema: params.schema,
+    source_artifact_id: params.sourceArtifactId,
+    downstream_artifact_ids: params.downstreamArtifactIds,
+    artifacts_to_update: params.artifactsToUpdate,
+    phase: 'pre_apply',
+    ...(modifyInput ? { modify_input: modifyInput } : {}),
+    ...(params.editor ? { editor: params.editor } : {}),
+  });
+
+  await captureEvent('artifact_modify_requested', props);
+}
+
 async function hashArtifactFiles(
   changeDir: string,
   contextFiles: Record<string, string[]>

@@ -23,6 +23,8 @@ import {
   getOpsxSyncCommandTemplate,
   getOpsxProposeCommandTemplate,
   getOpsxProposeSkillTemplate,
+  getModifyChangeSkillTemplate,
+  getOpsxModifyCommandTemplate,
   getOpsxVerifyCommandTemplate,
   getSyncSpecsSkillTemplate,
   getVerifyChangeSkillTemplate,
@@ -57,6 +59,8 @@ const EXPECTED_FUNCTION_HASHES: Record<string, string> = {
   getOpsxVerifyCommandTemplate: 'eef9d8aa74ea9a294e0e0d1602728d1f35a8e3e7a539a3691feac4d2f460703a',
   getOpsxProposeSkillTemplate: '9844b8b0ecced3d482665f53e7dff28654205c5e11b9dad1c7970d85ba5c8372',
   getOpsxProposeCommandTemplate: '3fff9ca5176201da7d3cb4443e7fa95dda4c45447686dfcc223880dbe7b44d3e',
+  getModifyChangeSkillTemplate: 'b8a7144b92b7beba4d1b8634abd892ba20c51c4930df319139135ef886ae524d',
+  getOpsxModifyCommandTemplate: '05fe8fcb664b4b1e4acdddead00eb1a34b5323e202e51e0706029ae3de3775da',
   getFeedbackSkillTemplate: 'd7d83c5f7fc2b92fe8f4588a5bf2d9cb315e4c73ec19bcd5ef28270906319a0d',
 };
 
@@ -72,6 +76,7 @@ const EXPECTED_GENERATED_SKILL_CONTENT_HASHES: Record<string, string> = {
   'openspec-verify-change': 'a0783a833b7aff504d14b52045bb407a5343499ee0b73ad96d5988c70a67c32e',
   'openspec-onboard': 'b9b5445e4afa96e88dd5568858e259293c7758fd6202fd898aa27598593caffa',
   'openspec-propose': '870701f67ee2fdf560cc9ab451b07545ccb72f71a4fa02224975360051ac30c5',
+  'openspec-modify-change': '702b794229b3412b46f8000e967bd47e0422d75a45248dd336db369782914ea6',
 };
 
 // Intentionally excludes getFeedbackSkillTemplate: this list only models templates
@@ -88,6 +93,7 @@ const GENERATED_SKILL_FACTORIES: Array<[string, () => SkillTemplate]> = [
   ['openspec-verify-change', getVerifyChangeSkillTemplate],
   ['openspec-onboard', getOnboardSkillTemplate],
   ['openspec-propose', getOpsxProposeSkillTemplate],
+  ['openspec-modify-change', getModifyChangeSkillTemplate],
 ];
 
 function stableStringify(value: unknown): string {
@@ -135,6 +141,8 @@ describe('skill templates split parity', () => {
       getOpsxVerifyCommandTemplate,
       getOpsxProposeSkillTemplate,
       getOpsxProposeCommandTemplate,
+      getModifyChangeSkillTemplate,
+      getOpsxModifyCommandTemplate,
       getFeedbackSkillTemplate,
     };
 

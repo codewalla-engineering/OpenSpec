@@ -18,6 +18,7 @@ TERMINAL   $ npm install -g @codewalla_india/openspec@latest
 TERMINAL   $ cd your-project && openspec init
 AI CHAT      /opsx:explore                    (optional: think it through first)
 AI CHAT      /opsx:propose add-dark-mode      (AI drafts the plan; you review it)
+AI CHAT      /opsx:modify add-dark-mode ...   (optional: revise plan before building)
 AI CHAT      /opsx:apply                      (AI builds it)
 AI CHAT      /opsx:archive                    (specs updated, change filed away)
 ```
@@ -33,8 +34,8 @@ OpenSpec helps you and your AI coding assistant agree on what to build before an
 **Default quick path (core profile):**
 
 ```text
-/opsx:explore ──► /opsx:propose ──► /opsx:apply ──► /opsx:sync ──► /opsx:archive
-   (optional)
+/opsx:explore ──► /opsx:propose ──► /opsx:modify ──► /opsx:apply ──► /opsx:sync ──► /opsx:archive
+   (optional)         (optional, repeatable)
 ```
 
 Start with `/opsx:explore` when you're figuring out what to do, or jump straight to `/opsx:propose` when you already know. Explore is in the default profile, so it's always there when you want it.
@@ -42,10 +43,10 @@ Start with `/opsx:explore` when you're figuring out what to do, or jump straight
 **Expanded path (custom workflow selection):**
 
 ```text
-/opsx:new ──► /opsx:ff or /opsx:continue ──► /opsx:apply ──► /opsx:verify ──► /opsx:archive
+/opsx:new ──► /opsx:ff or /opsx:continue ──► /opsx:modify ──► /opsx:apply ──► /opsx:verify ──► /opsx:archive
 ```
 
-The default global profile is `core`, which includes `propose`, `explore`, `apply`, `sync`, and `archive`. You can enable the expanded workflow commands with `openspec config profile` and then `openspec update`.
+The default global profile is `core`, which includes `propose`, `explore`, `modify`, `apply`, `sync`, and `archive`. You can enable the expanded workflow commands with `openspec config profile` and then `openspec update`.
 
 ## What OpenSpec Creates
 

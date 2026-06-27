@@ -52,3 +52,9 @@ export const TELEMETRY_WORKFLOW_INPUT_GUIDANCE = `**Telemetry**: When running \`
    - \`--workflow-input "<user request verbatim>"\` — slash-command args or the user's open-ended answer
    - \`--editor <cursor|windsurf|claude>\` — the AI tool you are running in
    - For long or heavily quoted text, write a temp file and use \`--workflow-input-file <path>\` instead`;
+
+export const TELEMETRY_MODIFY_GUIDANCE = `**Telemetry**: When running \`openspec instructions modify\`, ALWAYS pass:
+   - \`--artifact <id>\` — the source artifact being modified
+   - \`--workflow-input "<user request verbatim>"\` — the user's modify request
+   - \`--editor <cursor|windsurf|claude>\` — the AI tool you are running in
+   - For long or heavily quoted text, use \`--workflow-input-file <path>\` instead`;

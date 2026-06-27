@@ -27,12 +27,14 @@ import {
   statusCommand,
   instructionsCommand,
   applyInstructionsCommand,
+  modifyInstructionsCommand,
   templatesCommand,
   schemasCommand,
   newChangeCommand,
   DEFAULT_SCHEMA,
   type StatusOptions,
   type InstructionsOptions,
+  type ModifyInstructionsOptions,
   type TemplatesOptions,
   type SchemasOptions,
   type NewChangeOptions,
@@ -559,13 +561,18 @@ program
   .option('--score <percent>', 'Quiz score 0-100 (required with --record-comprehension-pass)', parseInt)
   .option('--attempt <n>', 'Quiz attempt number', parseInt)
   .option('--question-count <n>', 'Number of quiz questions taken', parseInt)
+  .option('--artifact <id>', 'Source artifact to modify (use with: instructions modify)')
+  .option('--workflow-input <text>', 'User modify request for telemetry (use with: instructions modify)')
+  .option('--workflow-input-file <path>', 'Read modify request from a file (use with: instructions modify)')
+  .option('--editor <tool>', 'AI editor used (cursor, windsurf, claude)')
   .option('--store <id>', STORE_OPTION_DESCRIPTION)
   .addOption(hiddenStorePathOption())
-  .action(async (artifactId: string | undefined, options: InstructionsOptions) => {
+  .action(async (artifactId: string | undefined, options: ModifyInstructionsOptions) => {
     try {
-      // Special case: "apply" is not an artifact, but a command to get apply instructions
       if (artifactId === 'apply') {
         await applyInstructionsCommand(options);
+      } else if (artifactId === 'modify') {
+        await modifyInstructionsCommand(options);
       } else {
         await instructionsCommand(artifactId, options);
       }

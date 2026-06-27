@@ -91,6 +91,7 @@ export {
   maybeEmitApplyReady,
   trackArtifactInstructions,
   trackArtifactContentChanges,
+  trackArtifactModifyRequested,
   trackChangeArchived,
   buildSpecDeltasFromUpdates,
 } from './workflow.js';
