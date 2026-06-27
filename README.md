@@ -1,46 +1,25 @@
 <p align="center">
   <a href="https://github.com/codewalla-engineering/OpenSpec">
     <picture>
-      <source srcset="assets/openspec_bg.png">
-      <img src="assets/openspec_bg.png" alt="OpenSpec logo">
+      <source srcset="assets/codewalla_bg.png">
+      <img src="assets/codewalla_bg.png" alt="Codewalla OpenSpec" width="100%">
     </picture>
   </a>
 </p>
+
+<p align="center"><strong>Codewalla OpenSpec — spec-driven development for AI coding assistants</strong></p>
 
 <p align="center">
   <a href="https://github.com/codewalla-engineering/OpenSpec/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/codewalla-engineering/OpenSpec/actions/workflows/ci.yml/badge.svg" /></a>
   <a href="https://www.npmjs.com/package/@codewalla_india/openspec"><img alt="npm version" src="https://img.shields.io/npm/v/@codewalla_india/openspec?style=flat-square" /></a>
   <a href="./LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" /></a>
-  <a href="https://discord.gg/YctCnvvshC"><img alt="Discord" src="https://img.shields.io/discord/1411657095639601154?style=flat-square&logo=discord&logoColor=white&label=Discord&suffix=%20online" /></a>
 </p>
-
-<details>
-<summary><strong>The most loved spec framework.</strong></summary>
-
-[![Stars](https://img.shields.io/github/stars/codewalla-engineering/OpenSpec?style=flat-square&label=Stars)](https://github.com/codewalla-engineering/OpenSpec/stargazers)
-[![Downloads](https://img.shields.io/npm/dm/@codewalla_india/openspec?style=flat-square&label=Downloads/mo)](https://www.npmjs.com/package/@codewalla_india/openspec)
-[![Contributors](https://img.shields.io/github/contributors/codewalla-engineering/OpenSpec?style=flat-square&label=Contributors)](https://github.com/codewalla-engineering/OpenSpec/graphs/contributors)
-
-</details>
-<p></p>
-Our philosophy:
-
-```text
-→ fluid not rigid
-→ iterative not waterfall
-→ easy not complex
-→ built for brownfield not just greenfield
-→ scalable from personal projects to enterprises
-```
 
 > [!TIP]
-> **New workflow now available!** We've rebuilt OpenSpec with a new artifact-guided workflow.
+> **Codewalla workflow:** Propose from a Jira ticket or plain description, revise with `/opsx:modify`, then apply.
 >
-> Run `/opsx:propose "your idea"` to get started. → [Learn more here](docs/opsx.md)
-
-<p align="center">
-  Follow <a href="https://x.com/0xTab">@0xTab on X</a> for updates · Join the <a href="https://discord.gg/YctCnvvshC">OpenSpec Discord</a> for help and questions.
-</p>
+> Run `/opsx:propose CW-1234 add dark mode` or `/opsx:propose "your idea"` to get started.
+> → [Jira integration](docs/workflows.md#jira-integration) · [MCP setup](docs/mcp-setup.md)
 
 <!-- TODO: Add GIF demo of /opsx:propose → /opsx:archive workflow -->
 
@@ -55,17 +34,23 @@ AI:  Let me look at your styling setup...
      with system-preference detection. No new dependencies. Scope it?
 You: Yes, let's do it.
 
-You: /opsx:propose add-dark-mode
-AI:  Created openspec/changes/add-dark-mode/
-     ✓ proposal.md — why we're doing this, what's changing
-     ✓ specs/       — requirements and scenarios
+You: /opsx:propose CW-1234 add-dark-mode
+AI:  Found CW-1234: 'Add dark mode'. Creating change from Jira ticket...
+     ✓ proposal.md  (Impact: Jira: CW-1234)
+     ✓ specs/ui/    (requirements from Jira ACs)
      ✓ design.md    — technical approach
+     ✓ plan.md      — file-level code map
      ✓ tasks.md     — implementation checklist
      Ready for implementation!
 
+You: /opsx:modify add-dark-mode design use CSS variables instead of hardcoded colors
+AI:  Updated design.md → propagated to plan.md and tasks.md
+     Run /opsx:apply when ready.
+
 You: /opsx:apply
-AI:  Comprehension check — 6 questions on your proposal, design, specs, and tasks...
-     ✓ 83% — ready to implement.
+AI:  Jira context: CW-1234 — all ACs covered ✓
+     Comprehension check — 7 questions on proposal, design, specs, plan, and tasks...
+     ✓ 86% — ready to implement.
      Implementing tasks...
      ✓ 1.1 Add theme context provider
      ✓ 1.2 Create toggle component
@@ -77,15 +62,6 @@ You: /opsx:archive
 AI:  Archived to openspec/changes/archive/2025-01-23-add-dark-mode/
      Specs updated. Ready for the next feature.
 ```
-
-<details>
-<summary><strong>OpenSpec Dashboard</strong></summary>
-
-<p align="center">
-  <img src="assets/openspec_dashboard.png" alt="OpenSpec dashboard preview" width="90%">
-</p>
-
-</details>
 
 ## Quick Start
 
@@ -104,18 +80,35 @@ cd your-project
 openspec init
 ```
 
+> [!NOTE]
+> **Codewalla identity:** `openspec init` prompts for your Codewalla email or username. All commands require telemetry identity. CI runners should pre-provision `~/.config/openspec/telemetry-identity.json` or set `OPENSPEC_TELEMETRY_USER`.
+
 Now talk to your AI:
 
-- **Not sure what to build yet?** Start with `/opsx:explore`, a no-stakes thinking partner that reads your code, weighs options, and shapes a plan before anything is written. ([Explore guide](docs/explore.md))
-- **Already know what you want?** Go straight to `/opsx:propose <what-you-want-to-build>`.
-- **Ready to implement?** Run `/opsx:apply` — a short comprehension quiz checks you understand the proposal, design, specs, and tasks before any code is written.
+- **Not sure what you want to build yet?** Start with `/opsx:explore`, a no-stakes thinking partner that reads your code, weighs options, and shapes a plan before anything is written. ([Explore guide](docs/explore.md))
+- **Already know what you want?** Go straight to `/opsx:propose <what-you-want-to-build>` or `/opsx:propose CW-1234 <summary>` to import from Jira.
+- **Need to revise the plan before coding?** Run `/opsx:modify` — pre-apply only; propagates changes to downstream artifacts. ([Editing a change](docs/editing-changes.md))
+- **Ready to implement?** Run `/opsx:apply` — a short comprehension quiz checks you understand the proposal, design, specs, plan, and tasks before any code is written.
 
-The default `core` profile includes `/opsx:explore`, `/opsx:propose`, `/opsx:apply`, `/opsx:sync`, and `/opsx:archive`. If you want the expanded workflow (`/opsx:new`, `/opsx:continue`, `/opsx:ff`, `/opsx:verify`, `/opsx:bulk-archive`, `/opsx:onboard`), select it with `openspec config profile` and apply with `openspec update`.
+The default `core` profile includes `/opsx:explore`, `/opsx:propose`, `/opsx:modify`, `/opsx:apply`, `/opsx:sync`, and `/opsx:archive`. If you want the expanded workflow (`/opsx:new`, `/opsx:continue`, `/opsx:ff`, `/opsx:verify`, `/opsx:bulk-archive`, `/opsx:onboard`), select it with `openspec config profile` and apply with `openspec update`.
 
 > [!NOTE]
 > Not sure if your tool is supported? [View the full list](docs/supported-tools.md) – we support 25+ tools and growing.
 >
 > Also works with pnpm, yarn, bun, and nix. [See installation options](docs/installation.md).
+
+## Codewalla workflow & MCPs
+
+OpenSpec workflows integrate with MCP servers in your AI tool. MCPs are optional — workflows degrade gracefully when a server is unavailable.
+
+| MCP | Workflow | Behavior |
+|-----|----------|----------|
+| **Atlassian** | `/opsx:propose`, `/opsx:apply` | Import Jira tickets; enrich and cross-check ACs vs tasks; skips if unavailable |
+| **Context7** | `/opsx:apply` | Fetch current library docs when tasks reference packages; max 3 calls per session |
+| **Browser** | `/opsx:verify` (expanded profile) | Screenshots, a11y snapshot, console errors; not run during apply |
+
+→ **[MCP Setup guide](docs/mcp-setup.md)** — enable servers in Cursor or your AI tool<br>
+→ **[Jira integration](docs/workflows.md#jira-integration)** — naming conventions and ticket flows
 
 ## Docs
 
@@ -127,6 +120,7 @@ The default `core` profile includes `/opsx:explore`, `/opsx:propose`, `/opsx:app
 → **[Core Concepts at a Glance](docs/overview.md)**: the whole mental model, one page<br>
 → **[Examples & Recipes](docs/examples.md)**: real changes, start to finish<br>
 → **[Workflows](docs/workflows.md)**: combos and patterns<br>
+→ **[MCP Setup](docs/mcp-setup.md)**: Atlassian, Context7, and browser MCPs<br>
 → **[Existing Projects](docs/existing-projects.md)**: adopt OpenSpec on a brownfield codebase<br>
 → **[Editing a Change](docs/editing-changes.md)**: update artifacts, go back, reconcile manual edits<br>
 → **[Commands](docs/commands.md)**: slash commands & skills<br>
@@ -151,17 +145,11 @@ Third-party schema bundles distributed via standalone repositories — these pro
 AI coding assistants are powerful but unpredictable when requirements live only in chat history. OpenSpec adds a lightweight spec layer so you agree on what to build before any code is written.
 
 - **Agree before you build** — human and AI align on specs before code gets written
-- **Stay organized** — each change gets its own folder with proposal, specs, design, and tasks
-- **Work fluidly** — update any artifact anytime, no rigid phase gates
+- **Stay organized** — each change gets its own folder with proposal, specs, design, plan, and tasks
+- **Work fluidly** — update any artifact anytime with `/opsx:modify`; no rigid phase gates
+- **Jira-native workflow** — propose from ticket keys, enrich from Jira during apply, traceability in proposal Impact
+- **MCP-powered** — Atlassian, Context7, and browser MCPs built into generated skills
 - **Use your tools** — works with 20+ AI assistants via slash commands
-
-### How we compare
-
-**vs. [Spec Kit](https://github.com/github/spec-kit)** (GitHub) — Thorough but heavyweight. Rigid phase gates, lots of Markdown, Python setup. OpenSpec is lighter and lets you iterate freely.
-
-**vs. [Kiro](https://kiro.dev)** (AWS) — Powerful but you're locked into their IDE and limited to Claude models. OpenSpec works with the tools you already use.
-
-**vs. nothing** — AI coding without specs means vague prompts and unpredictable results. OpenSpec brings predictability without the ceremony.
 
 ## Updating OpenSpec
 
@@ -173,7 +161,7 @@ npm install -g @codewalla_india/openspec@latest
 
 **Refresh agent instructions**
 
-Run this inside each project to regenerate AI guidance and ensure the latest slash commands are active:
+Run this inside each project to regenerate AI guidance and ensure the latest slash commands and MCP guidance are active:
 
 ```bash
 openspec update
@@ -181,29 +169,11 @@ openspec update
 
 ## Usage Notes
 
-**Model selection**: OpenSpec works best with high-reasoning models. We recommend Codex 5.5 and Opus 4.7 for both planning and implementation.
-
 **Context hygiene**: OpenSpec benefits from a clean context window. Clear your context before starting implementation and maintain good context hygiene throughout your session.
 
-**Comprehension check**: `/opsx:apply` runs a short quiz (enabled by default) on proposal, design, specs, and pending tasks before implementation. Questions test holistic understanding of the change, not task numbers or checklist trivia. Disable with `comprehension.enabled: false` in `openspec/config.yaml`. See [Workflows](docs/workflows.md#comprehension-quiz-before-apply).
+**Modify before apply**: `/opsx:modify` revises planning artifacts and propagates changes downstream. It is pre-apply only — once tasks are checked off in `/opsx:apply`, use manual edits or start a new change.
 
-## Contributing
-
-**Small fixes** — Bug fixes, typo corrections, and minor improvements can be submitted directly as PRs.
-
-**Larger changes** — For new features, significant refactors, or architectural changes, please submit an OpenSpec change proposal first so we can align on intent and goals before implementation begins.
-
-When writing proposals, keep the OpenSpec philosophy in mind: we serve a wide variety of users across different coding agents, models, and use cases. Changes should work well for everyone.
-
-**AI-generated code is welcome** — as long as it's been tested and verified. PRs containing AI-generated code should mention the coding agent and model used (e.g., "Generated with Claude Code using claude-opus-4-5-20251101").
-
-### Development
-
-- Install dependencies: `pnpm install`
-- Build: `pnpm run build`
-- Test: `pnpm test`
-- Develop CLI locally: `pnpm run dev` or `pnpm run dev:cli`
-- Conventional commits (one-line): `type(scope): subject`
+**Comprehension check**: `/opsx:apply` runs a short quiz (enabled by default) on proposal, design, specs, plan, and pending tasks before implementation. Questions test holistic understanding of the change, not task numbers or checklist trivia; plan receives the majority of questions when present. You need ≥ 80% to proceed. Disable with `comprehension.enabled: false` in `openspec/config.yaml`. See [Workflows](docs/workflows.md#comprehension-quiz-before-apply).
 
 ## Other
 
@@ -212,18 +182,9 @@ When writing proposals, keep the OpenSpec philosophy in mind: we serve a wide va
 
 Codewalla OpenSpec collects mandatory usage analytics tied to your email or username. Identity is collected during interactive `openspec init` or `openspec update` and stored at `~/.config/openspec/telemetry-identity.json` (never committed). All other commands require identity. CI runners should pre-provision that file or set `OPENSPEC_TELEMETRY_USER`.
 
-Events include command names, workflow metrics, change names, and workflow input text (via `--workflow-input` on `new change`) — not file paths or artifact/spec body content.
+Events include command names, workflow metrics, change names, workflow input text (via `--workflow-input` on `new change`), and modify requests (`artifact_modify_requested` with modify input) — not file paths or artifact/spec body content.
 
 </details>
-
-<details>
-<summary><strong>Maintainers & Advisors</strong></summary>
-
-See [MAINTAINERS.md](MAINTAINERS.md) for the list of core maintainers and advisors who help guide the project.
-
-</details>
-
-
 
 ## License
 

@@ -84,7 +84,7 @@ Don't worry about getting it perfect. We're still learning what works best here,
 
 Both `openspec init` and `openspec update` detect legacy files and guide you through the same cleanup process. Use whichever fits your situation:
 
-- New installs default to profile `core` (`propose`, `explore`, `apply`, `sync`, `archive`).
+- New installs default to profile `core` (`propose`, `explore`, `modify`, `apply`, `sync`, `archive`).
 - Migrated installs preserve your previously installed workflows by writing a `custom` profile when needed.
 
 ### Using `openspec init`
@@ -602,6 +602,6 @@ project/
 
 ## Getting Help
 
-- **Discord**: [discord.gg/YctCnvvshC](https://discord.gg/YctCnvvshC)
 - **GitHub Issues**: [github.com/codewalla-engineering/OpenSpec/issues](https://github.com/codewalla-engineering/OpenSpec/issues)
+- **From your terminal**: `openspec feedback "your message"`
 - **Documentation**: [docs/opsx.md](opsx.md) for the full OPSX reference

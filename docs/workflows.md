@@ -35,6 +35,7 @@ OPSX (fluid actions):
 New installs default to `core`, which provides:
 - `/opsx:explore`
 - `/opsx:propose`
+- `/opsx:modify`
 - `/opsx:apply`
 - `/opsx:sync`
 - `/opsx:archive`
@@ -42,8 +43,8 @@ New installs default to `core`, which provides:
 Typical flow:
 
 ```text
-/opsx:explore ──► /opsx:propose ──► /opsx:apply ──► /opsx:sync ──► /opsx:archive
-  (optional)
+/opsx:explore ──► /opsx:propose ──► /opsx:modify ──► /opsx:apply ──► /opsx:sync ──► /opsx:archive
+  (optional)                          (optional, repeatable)
 ```
 
 #### Start by exploring (the habit worth forming)
@@ -144,6 +145,9 @@ You: /opsx:propose CW-1234 add dark mode
 AI:  Found CW-1234: 'Add dark mode'. Creating change from Jira ticket...
      ✓ proposal.md (Impact: Jira: CW-1234)
      ✓ specs/ui/spec.md (requirements from Jira ACs)
+     ✓ design.md
+     ✓ plan.md
+     ✓ tasks.md
      ...
 ```
 
@@ -151,7 +155,23 @@ AI:  Found CW-1234: 'Add dark mode'. Creating change from Jira ticket...
 
 **Parallel changes, different tickets, same capability:** Also safe — e.g., `cw-1234-add-dark-mode` and `cw-1235-fix-theme-bug` both touch `specs/ui/`. Use bulk archive to merge in chronological order (see Parallel Changes below).
 
-Requires the Atlassian MCP for automatic ticket import during `/opsx:propose` and enrichment during `/opsx:apply`.
+Requires the Atlassian MCP for automatic ticket import during `/opsx:propose` and enrichment during `/opsx:apply`. See [MCP Setup](mcp-setup.md#atlassian-mcp) for configuration.
+
+### MCP integrations
+
+Codewalla OpenSpec embeds MCP guidance in generated skills and slash commands. MCPs are optional — workflows skip unavailable servers gracefully.
+
+| MCP | Command | What it does |
+|-----|---------|--------------|
+| **Atlassian** | `/opsx:propose`, `/opsx:apply` | Import Jira tickets; enrich and cross-check ACs vs tasks |
+| **Context7** | `/opsx:apply` | Fetch current library docs when tasks reference packages (max 3 calls/session) |
+| **Browser** | `/opsx:verify` | Screenshots, a11y snapshot, console errors when UI is affected |
+
+**Context7 during apply:** When a task mentions a library by name or version-specific API, the agent calls `resolve-library-id` and `query-docs` before implementing. Pure business-logic tasks skip this step.
+
+**Browser during verify:** Requires the expanded profile (`openspec config profile` → enable `verify` → `openspec update`). Apply explicitly does **not** run browser tests — use `/opsx:verify` afterward.
+
+→ Full setup and troubleshooting: [MCP Setup](mcp-setup.md)
 
 ### Exploratory
 
@@ -503,6 +523,7 @@ For full command details and options, see [Commands](commands.md).
 |---------|---------|-------------|
 | `/opsx:propose` | Create change + planning artifacts | Fast default path (`core` profile) |
 | `/opsx:explore` | Think through ideas with the AI | Start here when unsure: unclear requirements, investigation, comparing options |
+| `/opsx:modify` | Revise planning artifacts (pre-apply) | Update proposal, design, plan, tasks, or specs before implementation |
 | `/opsx:new` | Start a change scaffold | Expanded mode, explicit artifact control |
 | `/opsx:continue` | Create next artifact | Expanded mode, step-by-step artifact creation |
 | `/opsx:ff` | Create all planning artifacts | Expanded mode, clear scope |
@@ -515,5 +536,6 @@ For full command details and options, see [Commands](commands.md).
 ## Next Steps
 
 - [Commands](commands.md) - Full command reference with options
+- [MCP Setup](mcp-setup.md) - Atlassian, Context7, and browser MCP configuration
 - [Concepts](concepts.md) - Deep dive into specs, artifacts, and schemas
 - [Customization](customization.md) - Create custom workflows

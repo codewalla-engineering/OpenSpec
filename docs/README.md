@@ -1,6 +1,6 @@
 # OpenSpec Documentation
 
-Welcome. This is the home for everything OpenSpec.
+Welcome. This is the home for everything **Codewalla OpenSpec**.
 
 OpenSpec helps you and your AI coding assistant **agree on what to build before any code is written.** You describe the change, the AI drafts a short spec and a task list, you both look at the same plan, and then the work happens. No more discovering halfway through that the AI built the wrong thing.
 
@@ -29,6 +29,8 @@ That second one matters more than it looks. OpenSpec has two halves: a command l
 
 **I want to bend it to my team's process.** [Customization](customization.md) covers project config, custom schemas, and shared context.
 
+**I use Jira.** [Workflows: Jira integration](workflows.md#jira-integration) and [MCP Setup](mcp-setup.md) cover ticket import, AC cross-checks, and Atlassian MCP configuration.
+
 **Something's broken.** [Troubleshooting](troubleshooting.md) collects the failures people actually hit, with fixes.
 
 ## The whole map
@@ -48,6 +50,7 @@ That second one matters more than it looks. OpenSpec has two halves: a command l
 | Doc | What it gives you |
 |-----|-------------------|
 | [Workflows](workflows.md) | Common patterns and when to reach for each command |
+| [MCP Setup](mcp-setup.md) | Atlassian, Context7, and browser MCP configuration |
 | [Examples & Recipes](examples.md) | Full walkthroughs of real changes, copy-pasteable |
 | [Using OpenSpec in an Existing Project](existing-projects.md) | Adopting OpenSpec on a large brownfield codebase |
 | [Editing & Iterating on a Change](editing-changes.md) | Update artifacts, go back, reconcile manual edits |
@@ -92,15 +95,15 @@ That second one matters more than it looks. OpenSpec has two halves: a command l
 2. Initialize     cd your-project && openspec init
 3. Explore        (in your AI chat)  /opsx:explore           ← optional, but a great habit
 4. Propose        (in your AI chat)  /opsx:propose add-dark-mode
-5. Build          (in your AI chat)  /opsx:apply
-6. Archive        (in your AI chat)  /opsx:archive
+5. Modify         (in your AI chat)  /opsx:modify ...         ← optional, pre-apply only
+6. Build          (in your AI chat)  /opsx:apply
+7. Archive        (in your AI chat)  /opsx:archive
 ```
 
 Steps 1 and 2 happen in your terminal. The rest happen in your AI assistant's chat. That split is the one thing worth memorizing, and [How Commands Work](how-commands-work.md) explains exactly why. Step 3 is optional, but starting with `/opsx:explore` when you're unsure is the habit most worth forming.
 
 ## Where else to get help
 
-- **Discord:** [discord.gg/YctCnvvshC](https://discord.gg/YctCnvvshC) for questions, ideas, and help.
 - **GitHub Issues:** [github.com/codewalla-engineering/OpenSpec/issues](https://github.com/codewalla-engineering/OpenSpec/issues) for bugs and feature requests.
 - **`openspec feedback "your message"`** sends feedback straight from your terminal (it opens a GitHub issue).
 
