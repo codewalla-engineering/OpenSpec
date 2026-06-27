@@ -66,7 +66,7 @@ Explore to think it through, propose to draft the plan, apply to build it, archi
 
 ### What are `core` and expanded profiles?
 
-A profile decides which slash commands get installed. **Core** (the default) gives you `propose`, `explore`, `apply`, `sync`, `archive`. The **expanded** set adds `new`, `continue`, `ff`, `verify`, `bulk-archive`, and `onboard` for finer control. Switch with `openspec config profile`, then apply with `openspec update`.
+A profile decides which slash commands get installed. **Core** (the default) gives you `propose`, `explore`, `modify`, `apply`, `sync`, `archive`. The **expanded** set adds `new`, `continue`, `ff`, `verify`, `bulk-archive`, and `onboard` for finer control. Switch with `openspec config profile`, then apply with `openspec update`.
 
 ### Do I need to run `/opsx:sync`?
 
@@ -146,7 +146,6 @@ There's no uninstall command, because it's just a global package plus files in y
 
 ### Where do I ask questions or report bugs?
 
-- **Discord:** [discord.gg/YctCnvvshC](https://discord.gg/YctCnvvshC)
 - **GitHub Issues:** [github.com/codewalla-engineering/OpenSpec/issues](https://github.com/codewalla-engineering/OpenSpec/issues)
 - **From your terminal:** `openspec feedback "your message"` opens a GitHub issue for you.
 

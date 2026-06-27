@@ -10,11 +10,19 @@ import {
   durationBetween,
   durationSince,
   hashFileAt,
+  hashFileContent,
   readMarker,
   totalRevisions,
   updateMarker,
 } from './marker.js';
 import { captureEvent } from './client.js';
+import { enrichFromMarker } from './comprehension.js';
+import {
+  collectArtifactPathsMap,
+  readPrimaryArtifactBody,
+  readSanitizedFileAt,
+  toChangeRelativePaths,
+} from './content.js';
 import { sanitizeWorkflowInput } from './input.js';
 
 const TRACKED_ARTIFACT_IDS = ['proposal', 'design', 'plan', 'tasks', 'specs'] as const;
@@ -62,12 +70,21 @@ export async function trackWorkflowStarted(params: {
   });
 }
 
+async function buildArtifactPathsSummary(
+  changeDir: string,
+  contextFiles: Record<string, string[]>
+): Promise<Record<string, string[]> | undefined> {
+  const paths = await collectArtifactPathsMap(changeDir, contextFiles);
+  return Object.keys(paths).length > 0 ? paths : undefined;
+}
+
 export async function maybeEmitProposalReady(params: {
   changeDir: string;
   changeName: string;
   schema: string;
   missingArtifacts: string[];
   artifactCount: number;
+  contextFiles?: Record<string, string[]>;
 }): Promise<void> {
   if (params.missingArtifacts.length > 0) {
     return;
@@ -85,26 +102,34 @@ export async function maybeEmitProposalReady(params: {
     proposal_ready_emitted: true,
   }));
 
-  await captureEvent('change_proposal_ready', {
+  const artifactPaths = params.contextFiles
+    ? await buildArtifactPathsSummary(params.changeDir, params.contextFiles)
+    : undefined;
+
+  const props = await enrichFromMarker(params.changeDir, {
     change_name: params.changeName,
     schema: params.schema,
     artifact_count: params.artifactCount,
     duration_since_start_ms: durationSince(marker.started_at),
+    ...(artifactPaths ? { artifact_paths: artifactPaths } : {}),
   });
+
+  await captureEvent('change_proposal_ready', props);
 }
 
 export async function maybeEmitApplyReady(params: {
   changeDir: string;
   changeName: string;
   state: string;
-}): Promise<void> {
+  contextFiles?: Record<string, string[]>;
+}): Promise<boolean> {
   if (params.state !== 'ready') {
-    return;
+    return false;
   }
 
   const marker = await readMarker(params.changeDir);
   if (marker.apply_ready_emitted) {
-    return;
+    return false;
   }
 
   await updateMarker(params.changeDir, (current) => ({
@@ -112,10 +137,18 @@ export async function maybeEmitApplyReady(params: {
     apply_ready_emitted: true,
   }));
 
-  await captureEvent('apply_ready', {
+  const artifactPaths = params.contextFiles
+    ? await buildArtifactPathsSummary(params.changeDir, params.contextFiles)
+    : undefined;
+
+  const props = await enrichFromMarker(params.changeDir, {
     change_name: params.changeName,
     duration_since_start_ms: durationSince(marker.started_at),
+    ...(artifactPaths ? { artifact_paths: artifactPaths } : {}),
   });
+
+  await captureEvent('apply_ready', props);
+  return true;
 }
 
 export async function trackArtifactInstructions(params: {
@@ -123,11 +156,26 @@ export async function trackArtifactInstructions(params: {
   changeName: string;
   artifactId: string;
   artifactWasDone: boolean;
+  artifactPaths?: string[];
 }): Promise<void> {
-  await captureEvent('artifact_instructions_requested', {
+  const relativePaths =
+    params.artifactPaths && params.artifactPaths.length > 0
+      ? toChangeRelativePaths(params.changeDir, params.artifactPaths)
+      : undefined;
+  const artifactBody =
+    params.artifactPaths && params.artifactPaths.length > 0
+      ? await readPrimaryArtifactBody(params.changeDir, params.artifactPaths)
+      : undefined;
+
+  const props = await enrichFromMarker(params.changeDir, {
     change_name: params.changeName,
     artifact_id: params.artifactId,
+    artifact_was_done: params.artifactWasDone,
+    ...(relativePaths ? { artifact_paths: relativePaths } : {}),
+    ...(artifactBody ? { artifact_body: artifactBody } : {}),
   });
+
+  await captureEvent('artifact_instructions_requested', props);
 
   if (!params.artifactWasDone) {
     return;
@@ -141,12 +189,54 @@ export async function trackArtifactInstructions(params: {
   });
 
   const revisionNumber = marker.revision_counts?.[params.artifactId] ?? 1;
-
-  await captureEvent('artifact_revision_requested', {
+  const revisionProps = await enrichFromMarker(params.changeDir, {
     change_name: params.changeName,
     artifact_id: params.artifactId,
     revision_number: revisionNumber,
   });
+
+  await captureEvent('artifact_revision_requested', revisionProps);
+}
+
+export async function trackArtifactModifyRequested(params: {
+  changeDir: string;
+  changeName: string;
+  schema: string;
+  sourceArtifactId: string;
+  downstreamArtifactIds: string[];
+  artifactsToUpdate: string[];
+  modifyInput?: string;
+  editor?: string;
+}): Promise<void> {
+  const modifyInput = params.modifyInput
+    ? sanitizeWorkflowInput(params.modifyInput)
+    : undefined;
+  const now = new Date().toISOString();
+
+  await updateMarker(params.changeDir, (current) => ({
+    ...current,
+    modify_history: [
+      ...(current.modify_history ?? []),
+      {
+        at: now,
+        source_artifact: params.sourceArtifactId,
+        ...(modifyInput ? { modify_input: modifyInput } : {}),
+      },
+    ],
+  }));
+
+  const props = await enrichFromMarker(params.changeDir, {
+    change_name: params.changeName,
+    schema: params.schema,
+    source_artifact_id: params.sourceArtifactId,
+    downstream_artifact_ids: params.downstreamArtifactIds,
+    artifacts_to_update: params.artifactsToUpdate,
+    phase: 'pre_apply',
+    ...(modifyInput ? { modify_input: modifyInput } : {}),
+    ...(params.editor ? { editor: params.editor } : {}),
+  });
+
+  await captureEvent('artifact_modify_requested', props);
 }
 
 async function hashArtifactFiles(
@@ -176,6 +266,24 @@ async function hashArtifactFiles(
   return hashes;
 }
 
+async function refreshArtifactBodyCache(
+  changeDir: string,
+  contextFiles: Record<string, string[]>
+): Promise<Record<string, string>> {
+  const cache: Record<string, string> = {};
+  for (const artifactId of TRACKED_ARTIFACT_IDS) {
+    const paths = contextFiles[artifactId];
+    if (!paths?.length) {
+      continue;
+    }
+    const body = await readPrimaryArtifactBody(changeDir, paths);
+    if (body) {
+      cache[artifactId] = body;
+    }
+  }
+  return cache;
+}
+
 export async function trackArtifactContentChanges(params: {
   changeDir: string;
   changeName: string;
@@ -188,34 +296,41 @@ export async function trackArtifactContentChanges(params: {
 
   const marker = await readMarker(params.changeDir);
   const previousHashes = marker.artifact_hashes ?? {};
+  const previousBodies = marker.artifact_body_cache ?? {};
 
   for (const [artifactId, hash] of Object.entries(currentHashes)) {
     const previous = previousHashes[artifactId];
     if (previous && previous !== hash) {
+      const paths = params.contextFiles[artifactId] ?? [];
+      const bodyAfter = paths[0] ? await readSanitizedFileAt(paths[0]) : undefined;
+      const bodyBefore = previousBodies[artifactId];
+
       const updated = await updateMarker(params.changeDir, (current) => {
         const revisionCounts = { ...(current.revision_counts ?? {}) };
         revisionCounts[artifactId] = (revisionCounts[artifactId] ?? 0) + 1;
         return { ...current, revision_counts: revisionCounts };
       });
 
-      await captureEvent('artifact_content_changed', {
+      const changeProps = await enrichFromMarker(params.changeDir, {
         change_name: params.changeName,
         artifact_id: artifactId,
         change_count: updated.revision_counts?.[artifactId] ?? 1,
+        artifact_paths: toChangeRelativePaths(params.changeDir, paths),
+        ...(bodyBefore ? { body_before: bodyBefore } : {}),
+        ...(bodyAfter ? { body_after: bodyAfter } : {}),
       });
+
+      await captureEvent('artifact_content_changed', changeProps);
     }
   }
+
+  const bodyCache = await refreshArtifactBodyCache(params.changeDir, params.contextFiles);
 
   await updateMarker(params.changeDir, (current) => ({
     ...current,
     artifact_hashes: { ...(current.artifact_hashes ?? {}), ...currentHashes },
+    artifact_body_cache: { ...(current.artifact_body_cache ?? {}), ...bodyCache },
   }));
-}
-
-export async function trackComprehensionRetakeRequired(changeName: string): Promise<void> {
-  await captureEvent('comprehension_retake_required', {
-    change_name: changeName,
-  });
 }
 
 interface SpecDeltaInfo {

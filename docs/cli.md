@@ -82,7 +82,7 @@ These options work with all commands:
 
 Initialize OpenSpec in your project. Creates the folder structure and configures AI tool integrations.
 
-Default behavior uses global config defaults: profile `core`, delivery `both`, workflows `propose, explore, apply, sync, archive`.
+Default behavior uses global config defaults: profile `core`, delivery `both`, workflows `propose, explore, modify, apply, sync, archive`.
 
 ```
 openspec init [path] [options]
@@ -1169,6 +1169,42 @@ Non-interactive init/update and CI must pre-provision `~/.config/openspec/teleme
 
 Workflow input is captured when `openspec new change` is run with `--workflow-input` or `--workflow-input-file` (typically by agents following `/opsx:propose`, `/opsx:new`, or `/opsx:ff` skills). Use `--editor` to record which AI tool was used (`cursor`, `windsurf`, `claude`).
 
+### Caller detection
+
+Every telemetry event includes a `caller` property detected automatically:
+
+| Condition | `caller` value |
+|-----------|----------------|
+| Interactive terminal | `human` |
+| Non-interactive stdin (typical agent loops) | `automation` |
+| `CI=true` | `ci` |
+| Devin env fingerprints (`DEVIN_*`) | `devin` |
+| Cursor agent env fingerprints | `cursor-agent` |
+
+Set `OPENSPEC_CALLER` only to override misclassification.
+
+### Comprehension analytics
+
+Each `--record-comprehension-pass` emits one `comprehension_attempt` event with `attempt`, `score_percent`, `result`, `failure_count`, and sanitized `artifact_bodies` snapshots.
+
+Example PostHog query for an attempt table per change:
+
+```sql
+SELECT
+  properties.attempt AS attempt,
+  timestamp AS time,
+  properties.score_percent AS score,
+  if(
+    properties.result = 'passed',
+    if(properties.next_milestone = 'apply_ready', 'Passed → apply_ready', 'Passed'),
+    'Failed'
+  ) AS result
+FROM events
+WHERE event = 'comprehension_attempt'
+  AND properties.change_name = '<change-id>'
+ORDER BY properties.attempt ASC
+```
+
 ---
 
 ## Environment Variables
@@ -1179,6 +1215,7 @@ Workflow input is captured when `openspec new change` is run with `--workflow-in
 | `POSTHOG_API_KEY` | Optional override for PostHog project key (embedded by default) |
 | `POSTHOG_HOST` | Optional override for PostHog host (default: `https://us.i.posthog.com`) |
 | `OPENSPEC_CONCURRENCY` | Default concurrency for bulk validation (default: 6) |
+| `OPENSPEC_CALLER` | Optional override for auto-detected telemetry `caller` (e.g. custom agent name) |
 | `EDITOR` or `VISUAL` | Editor for `openspec config edit` |
 | `NO_COLOR` | Disable color output when set |
 

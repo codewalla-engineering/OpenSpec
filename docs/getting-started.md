@@ -15,14 +15,17 @@ The whole loop, with each step labeled by where it happens:
 
 ```text
 TERMINAL   $ npm install -g @codewalla_india/openspec@latest
-TERMINAL   $ cd your-project && openspec init
+TERMINAL   $ cd your-project && openspec init   (prompts for Codewalla email/username)
 AI CHAT      /opsx:explore                    (optional: think it through first)
 AI CHAT      /opsx:propose add-dark-mode      (AI drafts the plan; you review it)
+AI CHAT      /opsx:modify add-dark-mode ...   (optional: revise plan before building)
 AI CHAT      /opsx:apply                      (AI builds it)
 AI CHAT      /opsx:archive                    (specs updated, change filed away)
 ```
 
 Two terminal steps to set up, then you live in chat. The rest of this guide unpacks what each step does and what you'll see.
+
+> **Codewalla identity:** `openspec init` collects your email or username for mandatory telemetry. All CLI commands require identity. CI runners should pre-provision `~/.config/openspec/telemetry-identity.json` or set `OPENSPEC_TELEMETRY_USER`.
 
 > **Not sure what to build yet? Start with `/opsx:explore`.** It's a no-stakes thinking partner that reads your codebase, weighs options, and sharpens a fuzzy idea into a concrete plan, all before any artifact or code exists. When the picture is clear, it hands off to `/opsx:propose`. This is the single best habit for working with an AI that will otherwise confidently build the wrong thing. See the [Explore guide](explore.md).
 
@@ -33,8 +36,8 @@ OpenSpec helps you and your AI coding assistant agree on what to build before an
 **Default quick path (core profile):**
 
 ```text
-/opsx:explore ──► /opsx:propose ──► /opsx:apply ──► /opsx:sync ──► /opsx:archive
-   (optional)
+/opsx:explore ──► /opsx:propose ──► /opsx:modify ──► /opsx:apply ──► /opsx:sync ──► /opsx:archive
+   (optional)         (optional, repeatable)
 ```
 
 Start with `/opsx:explore` when you're figuring out what to do, or jump straight to `/opsx:propose` when you already know. Explore is in the default profile, so it's always there when you want it.
@@ -42,10 +45,12 @@ Start with `/opsx:explore` when you're figuring out what to do, or jump straight
 **Expanded path (custom workflow selection):**
 
 ```text
-/opsx:new ──► /opsx:ff or /opsx:continue ──► /opsx:apply ──► /opsx:verify ──► /opsx:archive
+/opsx:new ──► /opsx:ff or /opsx:continue ──► /opsx:modify ──► /opsx:apply ──► /opsx:verify ──► /opsx:archive
 ```
 
-The default global profile is `core`, which includes `propose`, `explore`, `apply`, `sync`, and `archive`. You can enable the expanded workflow commands with `openspec config profile` and then `openspec update`.
+The default global profile is `core`, which includes `propose`, `explore`, `modify`, `apply`, `sync`, and `archive`. You can enable the expanded workflow commands with `openspec config profile` and then `openspec update`.
+
+**MCP integrations:** Codewalla workflows integrate with Atlassian (Jira), Context7 (library docs), and browser MCPs. Enable them in your AI tool, then run `openspec update`. See [MCP Setup](mcp-setup.md).
 
 ## What OpenSpec Creates
 
@@ -60,6 +65,7 @@ openspec/
 │   └── <change-name>/
 │       ├── proposal.md
 │       ├── design.md
+│       ├── plan.md
 │       ├── tasks.md
 │       └── specs/      # Delta specs (what's changing)
 │           └── <domain>/
@@ -82,6 +88,7 @@ Each change folder contains artifacts that guide the work:
 | `proposal.md` | The "why" and "what" - captures intent, scope, and approach |
 | `specs/` | Delta specs showing ADDED/MODIFIED/REMOVED requirements |
 | `design.md` | The "how" - technical approach and architecture decisions |
+| `plan.md` | File-level code map, implementation order, and test plan |
 | `tasks.md` | Implementation checklist with checkboxes |
 
 **Artifacts build on each other:**

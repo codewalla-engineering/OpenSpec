@@ -17,6 +17,32 @@ The system SHALL send a `command_executed` event to PostHog when any CLI command
 - **WHEN** a user runs a nested command like `openspec change apply`
 - **THEN** the system sends a `command_executed` event with the full command path (e.g., `change:apply`)
 
+#### Scenario: Instructions artifact path
+- **WHEN** a user runs `openspec instructions proposal` or `openspec instructions apply`
+- **THEN** the system sends a `command_executed` event with `command` set to `instructions:proposal` or `instructions:apply` respectively
+
+#### Scenario: Instructions record pass path
+- **WHEN** a user runs `openspec instructions apply --record-comprehension-pass`
+- **THEN** the system sends a `command_executed` event with `command` set to `instructions:apply:record_pass`
+
+#### Scenario: Command context from flags
+- **WHEN** a user runs a command with `--change <id>`
+- **THEN** the `command_executed` event includes `change_name` when available from CLI options
+
+### Requirement: Throttled PostHog identify
+The system SHALL persist identify state to `~/.config/openspec/telemetry-identify-state.json` and skip PostHog `identify()` when the same user was identified within the previous 24 hours.
+
+### Requirement: Auto-detected caller
+The system SHALL set a `caller` property on every telemetry event using automatic detection (agent env fingerprints, `CI=true`, non-interactive TTY, or interactive terminal). The system MAY accept `OPENSPEC_CALLER` as an override when heuristics are wrong.
+
+#### Scenario: Non-interactive agent invocation
+- **WHEN** the CLI runs without an interactive stdin TTY
+- **THEN** events include `caller: automation` unless a more specific agent fingerprint matches
+
+#### Scenario: Caller override
+- **WHEN** `OPENSPEC_CALLER` is set in the environment
+- **THEN** events include `caller` equal to that value
+
 ### Requirement: Identified user telemetry
 The system SHALL use a human-readable email or username as the PostHog `distinct_id`. The system SHALL NOT generate or use anonymous UUIDs.
 
@@ -44,7 +70,7 @@ The system SHALL use a human-readable email or username as the PostHog `distinct
 ### Requirement: Internal workflow input telemetry
 The system SHALL capture user workflow intent on `workflow_started` when provided via `openspec new change` flags. Workflow events MAY include `workflow_input`, `description`, `goal`, `editor`, `change_name`, capability names, and aggregate counts.
 
-The system SHALL NOT include file paths, artifact or spec body content, error stack traces, or IP addresses in telemetry events.
+The system SHALL include change-relative artifact paths and sanitized artifact/spec body content on workflow and comprehension events where content is available at emit time. The system SHALL apply secret redaction via `sanitizeTelemetryContent` before sending. The system SHALL include sanitized error messages and stack traces on `command_failed`. The system SHALL NOT include IP addresses in telemetry events.
 
 #### Scenario: Workflow input on funnel start
 - **WHEN** `openspec new change` succeeds with `--workflow-input` or `--workflow-input-file`
@@ -74,7 +100,15 @@ The system SHALL emit correlated workflow events per change: `workflow_started`,
 - **THEN** the system emits `change_archived` with `duration_since_start_ms` and revision aggregates
 
 ### Requirement: Comprehension events
-The system SHALL emit comprehension-related events when the apply gate is checked, a pass is recorded, or a pass fails.
+The system SHALL emit `comprehension_gate_checked` when the apply comprehension gate is evaluated, deduplicated when gate state is unchanged. The system SHALL emit one `comprehension_attempt` event per `--record-comprehension-pass` invocation with server-authoritative `attempt`, `score_percent`, `result` (`failed` or `passed`), and `failure_count`. On a passing attempt where apply becomes ready in the same flow, the event SHALL include `next_milestone: apply_ready`. The system SHALL increment `comprehension_attempt_count` and `comprehension_failure_count` in the change marker and increment person property `comprehension_failures_total` on each failed attempt.
+
+#### Scenario: Comprehension attempt timeline
+- **WHEN** a user or agent records comprehension pass attempts with `--record-comprehension-pass`
+- **THEN** each attempt emits one `comprehension_attempt` event suitable for per-change attempt history queries
+
+#### Scenario: Gate deduplication
+- **WHEN** apply instructions are fetched repeatedly without a change in gate pass state or best score
+- **THEN** the system does not emit duplicate `comprehension_gate_checked` events
 
 ### Requirement: Immediate event sending
 The system SHALL send telemetry events immediately without batching, using `flushAt: 1` and `flushInterval: 0` configuration.

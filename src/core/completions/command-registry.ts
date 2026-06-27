@@ -211,6 +211,26 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
         description: 'Number of quiz questions taken',
         takesValue: true,
       },
+      {
+        name: 'artifact',
+        description: 'Source artifact to modify (use with: instructions modify)',
+        takesValue: true,
+      },
+      {
+        name: 'workflow-input',
+        description: 'User modify request for telemetry (use with: instructions modify)',
+        takesValue: true,
+      },
+      {
+        name: 'workflow-input-file',
+        description: 'Read modify request from a file (use with: instructions modify)',
+        takesValue: true,
+      },
+      {
+        name: 'editor',
+        description: 'AI editor used (cursor, windsurf, claude)',
+        takesValue: true,
+      },
       COMMON_FLAGS.json,
       COMMON_FLAGS.store,
     ],

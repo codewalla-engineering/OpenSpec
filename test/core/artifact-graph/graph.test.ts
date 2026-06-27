@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import path from 'path';
 import { ArtifactGraph } from '../../../src/core/artifact-graph/graph.js';
+import { getPackageSchemasDir } from '../../../src/core/artifact-graph/resolver.js';
 import type { SchemaYaml } from '../../../src/core/artifact-graph/types.js';
 
 describe('artifact-graph/graph', () => {
@@ -263,6 +265,43 @@ artifacts:
       const graph = ArtifactGraph.fromSchema(schema);
 
       expect(graph.getBlocked(new Set(['A', 'B']))).toEqual({});
+    });
+  });
+
+  describe('getTransitiveDependents', () => {
+    it('should return empty for unknown artifact', () => {
+      const schema = createSchema([
+        { id: 'A', generates: 'a.md', description: 'A', template: 't.md', requires: [] },
+      ]);
+      const graph = ArtifactGraph.fromSchema(schema);
+
+      expect(graph.getTransitiveDependents('missing')).toEqual([]);
+    });
+
+    it('should return downstream artifacts in build order for diamond graph', () => {
+      const schema = createSchema([
+        { id: 'D', generates: 'd.md', description: 'D', template: 't.md', requires: ['B', 'C'] },
+        { id: 'B', generates: 'b.md', description: 'B', template: 't.md', requires: ['A'] },
+        { id: 'C', generates: 'c.md', description: 'C', template: 't.md', requires: ['A'] },
+        { id: 'A', generates: 'a.md', description: 'A', template: 't.md', requires: [] },
+      ]);
+      const graph = ArtifactGraph.fromSchema(schema);
+
+      expect(graph.getTransitiveDependents('A')).toEqual(['B', 'C', 'D']);
+      expect(graph.getTransitiveDependents('B')).toEqual(['D']);
+      expect(graph.getTransitiveDependents('D')).toEqual([]);
+    });
+  });
+
+  describe('getTransitiveDependents (spec-driven)', () => {
+    it('should match spec-driven downstream propagation', () => {
+      const schemaPath = path.join(getPackageSchemasDir(), 'spec-driven', 'schema.yaml');
+      const graph = ArtifactGraph.fromYaml(schemaPath);
+
+      expect(graph.getTransitiveDependents('proposal')).toEqual(['design', 'specs', 'plan', 'tasks']);
+      expect(graph.getTransitiveDependents('design')).toEqual(['plan', 'tasks']);
+      expect(graph.getTransitiveDependents('plan')).toEqual(['tasks']);
+      expect(graph.getTransitiveDependents('tasks')).toEqual([]);
     });
   });
 });

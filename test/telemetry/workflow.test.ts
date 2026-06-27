@@ -127,4 +127,63 @@ describe('telemetry/workflow', () => {
       })
     );
   });
+
+  it('emits artifact_was_done on artifact_instructions_requested', async () => {
+    const proposalPath = path.join(changeDir, 'proposal.md');
+    fs.writeFileSync(proposalPath, '# Proposal\n');
+
+    const { trackArtifactInstructions } = await import('../../src/telemetry/workflow.js');
+    mockCapture.mockClear();
+
+    await trackArtifactInstructions({
+      changeDir,
+      changeName: 'test-change',
+      artifactId: 'proposal',
+      artifactWasDone: true,
+      artifactPaths: [proposalPath],
+    });
+
+    expect(mockCapture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'artifact_instructions_requested',
+        properties: expect.objectContaining({
+          artifact_was_done: true,
+          artifact_paths: ['proposal.md'],
+          artifact_body: '# Proposal',
+        }),
+      })
+    );
+  });
+
+  it('emits artifact_modify_requested with modify_input', async () => {
+    const { trackArtifactModifyRequested } = await import('../../src/telemetry/workflow.js');
+    mockCapture.mockClear();
+
+    await trackArtifactModifyRequested({
+      changeDir,
+      changeName: 'test-change',
+      schema: 'spec-driven',
+      sourceArtifactId: 'design',
+      downstreamArtifactIds: ['plan', 'tasks'],
+      artifactsToUpdate: ['design', 'plan', 'tasks'],
+      modifyInput: 'use CSS variables',
+      editor: 'cursor',
+    });
+
+    expect(mockCapture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'artifact_modify_requested',
+        properties: expect.objectContaining({
+          change_name: 'test-change',
+          source_artifact_id: 'design',
+          modify_input: 'use CSS variables',
+          phase: 'pre_apply',
+        }),
+      })
+    );
+
+    const marker = fs.readFileSync(path.join(changeDir, CHANGE_TELEMETRY_FILENAME), 'utf-8');
+    expect(marker).toContain('modify_history');
+    expect(marker).toContain('use CSS variables');
+  });
 });

@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Concrete fixes for concrete problems. Each entry names a symptom, explains the likely cause in a sentence, and gives you the fix. If you don't see your issue here, the [FAQ](faq.md) may help, and the [Discord](https://discord.gg/YctCnvvshC) definitely will.
+Concrete fixes for concrete problems. Each entry names a symptom, explains the likely cause in a sentence, and gives you the fix. If you don't see your issue here, the [FAQ](faq.md) may help, or open a [GitHub Issue](https://github.com/codewalla-engineering/OpenSpec/issues).
 
 ## Installation and setup
 
@@ -159,7 +159,6 @@ That's intentional. OpenSpec never deletes `project.md` automatically because it
 
 ## Still stuck?
 
-- **Discord:** [discord.gg/YctCnvvshC](https://discord.gg/YctCnvvshC)
 - **GitHub Issues:** [github.com/codewalla-engineering/OpenSpec/issues](https://github.com/codewalla-engineering/OpenSpec/issues)
 - **From your terminal:** `openspec feedback "what went wrong"` opens an issue for you.
 

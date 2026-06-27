@@ -66,24 +66,61 @@ export class ArtifactGraph {
   }
 
   /**
+   * Builds reverse adjacency: artifact ID -> IDs of artifacts that depend on it.
+   */
+  private buildDependentsMap(): Map<string, string[]> {
+    const dependents = new Map<string, string[]>();
+
+    for (const artifact of this.artifacts.values()) {
+      dependents.set(artifact.id, []);
+    }
+
+    for (const artifact of this.artifacts.values()) {
+      for (const req of artifact.requires) {
+        dependents.get(req)!.push(artifact.id);
+      }
+    }
+
+    return dependents;
+  }
+
+  /**
+   * Returns all transitive downstream artifact IDs that depend on the given artifact,
+   * sorted by build order (excludes the source artifact itself).
+   */
+  getTransitiveDependents(artifactId: string): string[] {
+    if (!this.artifacts.has(artifactId)) {
+      return [];
+    }
+
+    const dependents = this.buildDependentsMap();
+    const collected = new Set<string>();
+    const queue = [artifactId];
+
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      for (const dependentId of dependents.get(current) ?? []) {
+        if (!collected.has(dependentId)) {
+          collected.add(dependentId);
+          queue.push(dependentId);
+        }
+      }
+    }
+
+    return this.getBuildOrder().filter((id) => collected.has(id));
+  }
+
+  /**
    * Computes the topological build order using Kahn's algorithm.
    * Returns artifact IDs in the order they should be built.
    */
   getBuildOrder(): string[] {
     const inDegree = new Map<string, number>();
-    const dependents = new Map<string, string[]>();
+    const dependents = this.buildDependentsMap();
 
-    // Initialize all artifacts
+    // Initialize in-degrees
     for (const artifact of this.artifacts.values()) {
       inDegree.set(artifact.id, artifact.requires.length);
-      dependents.set(artifact.id, []);
-    }
-
-    // Build reverse adjacency (who depends on whom)
-    for (const artifact of this.artifacts.values()) {
-      for (const req of artifact.requires) {
-        dependents.get(req)!.push(artifact.id);
-      }
     }
 
     // Start with roots (in-degree 0), sorted for determinism
