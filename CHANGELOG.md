@@ -1,5 +1,29 @@
 # @codewalla_india/openspec
 
+## 1.2.0
+
+### Minor Changes
+
+- ### New Features
+
+  - **Comprehension attempt analytics** — Each `--record-comprehension-pass` emits one `comprehension_attempt` event with server-authoritative `attempt`, `score_percent`, `result`, `failure_count`, sanitized `artifact_bodies`, and `next_milestone: apply_ready` when apply becomes ready in the same flow.
+  - **Auto-detected caller** — Every telemetry event includes `caller` (human, automation, ci, devin, cursor-agent) detected from TTY, CI, and agent env fingerprints; optional `OPENSPEC_CALLER` override.
+  - **Richer workflow telemetry** — Change-relative artifact paths, sanitized artifact bodies, and stack traces on `command_failed`; marker enrichments on funnel and comprehension events.
+
+  ### Bug Fixes
+
+  - **Reduced PostHog noise** — `$identify` throttled to once per user per 24 hours; duplicate `comprehension_gate_checked` events deduplicated when gate state is unchanged.
+  - **Finer command tracking** — `command_executed` uses paths like `instructions:proposal`, `instructions:apply`, and `instructions:apply:record_pass`, with optional `change_name` from `--change`.
+
+  ### Breaking Changes
+
+  - **Comprehension event rename** — `comprehension_pass_failed` and `comprehension_pass_recorded` are replaced by `comprehension_attempt` (`result: failed` or `passed`). Update PostHog insights filtering on the old event names.
+  - **Instructions command path** — PostHog filters on `command = instructions` should use `command` values like `instructions:proposal` or `instructions:apply`.
+
+  ### Other
+
+  - Telemetry spec now requires sanitized artifact paths, bodies, and stack traces where available; IP addresses remain excluded (`$ip: null`).
+
 ## 1.1.0
 
 ### Minor Changes

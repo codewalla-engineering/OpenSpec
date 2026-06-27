@@ -20,7 +20,14 @@ export interface ChangeTelemetryMarker {
   proposal_ready_emitted?: boolean;
   apply_ready_emitted?: boolean;
   artifact_hashes?: Record<string, string>;
+  artifact_body_cache?: Record<string, string>;
   revision_counts?: Record<string, number>;
+  comprehension_attempt_count?: number;
+  comprehension_failure_count?: number;
+  comprehension_gate_last_emitted?: {
+    passed: boolean;
+    best_score_percent?: number;
+  };
 }
 
 export function markerPath(changeDir: string): string {

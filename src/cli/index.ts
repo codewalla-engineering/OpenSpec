@@ -38,6 +38,10 @@ import {
   type NewChangeOptions,
 } from '../commands/workflow/index.js';
 import { requireTelemetryIdentity, TelemetryIdentityRequiredError, trackCommand, shutdown } from '../telemetry/index.js';
+import {
+  buildCommandTelemetryContext,
+  resolveTelemetryCommandPath,
+} from '../telemetry/command-context.js';
 import { COMMON_FLAGS } from '../core/completions/shared-flags.js';
 
 const STORE_OPTION_DESCRIPTION = COMMON_FLAGS.store.description;
@@ -155,7 +159,7 @@ program.hook('preAction', async (thisCommand, actionCommand) => {
     process.env.NO_COLOR = '1';
   }
 
-  const commandPath = getCommandPath(actionCommand);
+  const commandPath = resolveTelemetryCommandPath(getCommandPath(actionCommand), actionCommand);
   const isBootstrap = commandPath === 'init' || commandPath === 'update';
 
   if (!isBootstrap) {
@@ -169,7 +173,7 @@ program.hook('preAction', async (thisCommand, actionCommand) => {
     }
   }
 
-  await trackCommand(commandPath, version);
+  await trackCommand(commandPath, version, buildCommandTelemetryContext(actionCommand));
 });
 
 // Shutdown telemetry after command completes

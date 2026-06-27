@@ -3,6 +3,8 @@
  */
 import { PostHog } from 'posthog-node';
 import { createRequire } from 'module';
+import { resolveCaller } from './caller.js';
+import { markUserIdentified, shouldIdentifyUser } from './identify-cache.js';
 import { resolveTelemetryUserId } from './identity.js';
 
 const require = createRequire(import.meta.url);
@@ -57,20 +59,31 @@ async function identifyUser(userId: string): Promise<void> {
   if (identifiedUserId === userId) {
     return;
   }
+  if (!(await shouldIdentifyUser(userId))) {
+    identifiedUserId = userId;
+    return;
+  }
   try {
     getClient().identify({
       distinctId: userId,
       properties: { user_id: userId },
     });
+    await markUserIdentified(userId);
     identifiedUserId = userId;
   } catch {
     // Silent failure
   }
 }
 
+export interface PersonPropertyUpdates {
+  $set?: Record<string, unknown>;
+  $increment?: Record<string, number>;
+}
+
 export async function captureEvent(
   event: string,
-  properties: Record<string, unknown>
+  properties: Record<string, unknown>,
+  personUpdates?: PersonPropertyUpdates
 ): Promise<void> {
   const userId = await resolveTelemetryUserId({ prompt: false });
   if (!userId) {
@@ -84,8 +97,11 @@ export async function captureEvent(
       event,
       properties: {
         ...properties,
+        ...personUpdates?.$set ? { $set: personUpdates.$set } : {},
+        ...personUpdates?.$increment ? { $increment: personUpdates.$increment } : {},
         version: PACKAGE_VERSION,
         surface: 'cli',
+        caller: resolveCaller(),
         $ip: null,
       },
     });
@@ -125,7 +141,6 @@ export function getClientConfigForTests(): { key: string; host: string } | null 
 
 /** @internal Test helper — returns the custom fetch from PostHog options */
 export function getTelemetryFetchForTests(): typeof fetch | null {
-  // PostHog mock tests construct client via trackCommand; fetch is on constructor args
   return safeTelemetryFetch;
 }
 

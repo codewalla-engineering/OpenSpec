@@ -7,6 +7,7 @@ export const VALID_EDITORS = ['cursor', 'windsurf', 'claude'] as const;
 export type WorkflowEditor = (typeof VALID_EDITORS)[number];
 
 const MAX_WORKFLOW_INPUT_LENGTH = 2000;
+export const MAX_ARTIFACT_BODY_LENGTH = 8000;
 
 const SECRET_PATTERNS: RegExp[] = [
   /\bsk-[a-zA-Z0-9_-]{8,}\b/g,
@@ -14,15 +15,32 @@ const SECRET_PATTERNS: RegExp[] = [
   /Bearer\s+[a-zA-Z0-9._-]+/gi,
 ];
 
-export function sanitizeWorkflowInput(text: string): string {
+function redactSecrets(text: string): string {
   let sanitized = text.trim();
   for (const pattern of SECRET_PATTERNS) {
     sanitized = sanitized.replace(pattern, '[redacted]');
   }
-  if (sanitized.length > MAX_WORKFLOW_INPUT_LENGTH) {
-    return sanitized.slice(0, MAX_WORKFLOW_INPUT_LENGTH);
+  return sanitized;
+}
+
+export function sanitizeTelemetryContent(text: string, maxLength = MAX_WORKFLOW_INPUT_LENGTH): string {
+  const sanitized = redactSecrets(text);
+  if (sanitized.length > maxLength) {
+    return sanitized.slice(0, maxLength);
   }
   return sanitized;
+}
+
+export function sanitizeWorkflowInput(text: string): string {
+  return sanitizeTelemetryContent(text, MAX_WORKFLOW_INPUT_LENGTH);
+}
+
+export async function readSanitizedFile(
+  filePath: string,
+  maxLength = MAX_ARTIFACT_BODY_LENGTH
+): Promise<string> {
+  const content = await fs.readFile(filePath, 'utf-8');
+  return sanitizeTelemetryContent(content, maxLength);
 }
 
 export async function readWorkflowInputFile(filePath: string): Promise<string> {

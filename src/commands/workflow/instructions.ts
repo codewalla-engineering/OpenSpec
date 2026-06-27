@@ -38,15 +38,20 @@ import { readProjectConfig, type ProjectConfig } from '../../core/project-config
 import {
   checkComprehensionGate,
   ComprehensionPassError,
+  computeSpecStats,
   recordComprehensionPass,
+  resolveComprehensionConfig,
   type ArtifactPresence,
 } from '../../core/comprehension/index.js';
 import {
-  trackEvent,
   maybeEmitProposalReady,
   maybeEmitApplyReady,
   trackArtifactInstructions,
   trackArtifactContentChanges,
+  incrementComprehensionAttempt,
+  incrementComprehensionFailureCount,
+  trackComprehensionAttempt,
+  trackComprehensionGateChecked,
   trackComprehensionRetakeRequired,
 } from '../../telemetry/index.js';
 import {
@@ -197,6 +202,7 @@ export async function instructionsCommand(
       changeName,
       artifactId,
       artifactWasDone: artifactOutputs.length > 0,
+      artifactPaths: artifactOutputs,
     });
 
     const contextFiles: Record<string, string[]> = {};
@@ -375,6 +381,45 @@ function parseTasksFile(content: string): TaskItem[] {
   return tasks;
 }
 
+function resolveComprehensionQuestionCount(
+  optionCount: number | undefined,
+  specPaths: string[],
+  projectConfig: ProjectConfig | null | undefined,
+  pendingTaskCount: number,
+  artifactPresence: ArtifactPresence
+): number {
+  if (optionCount !== undefined && optionCount > 0) {
+    return optionCount;
+  }
+  const config = resolveComprehensionConfig(projectConfig);
+  return computeSpecStats(specPaths, config, pendingTaskCount, artifactPresence).questionCount;
+}
+
+async function emitComprehensionAttemptAfterPass(params: {
+  changeDir: string;
+  changeName: string;
+  attempt: number;
+  failureCountBefore: number;
+  scorePercent: number;
+  thresholdPercent: number;
+  questionCount: number;
+  contextFiles: Record<string, string[]>;
+  applyReadyEmitted: boolean;
+}): Promise<void> {
+  await trackComprehensionAttempt({
+    changeDir: params.changeDir,
+    changeName: params.changeName,
+    attempt: params.attempt,
+    scorePercent: params.scorePercent,
+    thresholdPercent: params.thresholdPercent,
+    questionCount: params.questionCount,
+    passed: true,
+    failureCountBefore: params.failureCountBefore,
+    nextMilestone: params.applyReadyEmitted ? 'apply_ready' : undefined,
+    contextFiles: params.contextFiles,
+  });
+}
+
 export interface GenerateApplyInstructionsOptions {
   planningHome?: PlanningHome;
   references?: ReferenceIndexEntry[];
@@ -478,6 +523,7 @@ export async function generateApplyInstructions(
 
   let missingComprehension: boolean | undefined;
   let comprehension: ApplyInstructions['comprehension'];
+  let applyReadyEmitted = false;
 
   await trackArtifactContentChanges({ changeDir, changeName, contextFiles });
   await maybeEmitProposalReady({
@@ -486,6 +532,7 @@ export async function generateApplyInstructions(
     schema: context.schemaName,
     missingArtifacts,
     artifactCount: schema.artifacts.length,
+    contextFiles,
   });
 
   if (state === 'ready') {
@@ -510,18 +557,28 @@ export async function generateApplyInstructions(
       comprehension = gate.info;
     }
 
-    await maybeEmitApplyReady({ changeDir, changeName, state });
+    applyReadyEmitted = await maybeEmitApplyReady({
+      changeDir,
+      changeName,
+      state,
+      contextFiles,
+    });
 
     if (gate.active && gate.info) {
-      await trackEvent('comprehension_gate_checked', {
-        change_name: changeName,
-        required: true,
+      await trackComprehensionGateChecked({
+        changeDir,
+        changeName,
         passed: gate.passed,
-        threshold_percent: gate.info.thresholdPercent,
-        question_count: gate.info.questionCount,
+        gateInfo: gate.info,
+        state: gate.passed ? 'ready' : 'blocked',
+        contextFiles,
       });
       if (!gate.passed && gate.info.bestScorePercent !== undefined) {
-        await trackComprehensionRetakeRequired(changeName);
+        await trackComprehensionRetakeRequired({
+          changeDir,
+          changeName,
+          gateInfo: gate.info,
+        });
       }
     }
   }
@@ -538,6 +595,7 @@ export async function generateApplyInstructions(
     missingComprehension,
     comprehension,
     instruction,
+    applyReadyEmitted,
     ...(references !== undefined ? { references } : {}),
   };
 }
@@ -602,6 +660,14 @@ export async function applyInstructionsCommand(options: ApplyInstructionsOptions
         }
       }
       const artifactPresence = buildArtifactPresence(contextFilesForPresence, pendingTaskCount);
+      const questionCount = resolveComprehensionQuestionCount(
+        options.questionCount,
+        specPaths,
+        projectConfig,
+        pendingTaskCount,
+        artifactPresence
+      );
+      const { attempt, failureCountBefore } = await incrementComprehensionAttempt(changeDir);
 
       try {
         const record = recordComprehensionPass({
@@ -611,27 +677,33 @@ export async function applyInstructionsCommand(options: ApplyInstructionsOptions
           planPath,
           projectConfig,
           scorePercent: options.score,
-          attempt: options.attempt ?? 1,
-          questionCount: options.questionCount ?? 0,
+          attempt,
+          questionCount,
           pendingTaskCount,
           artifactPresence,
         });
 
-        await trackEvent('comprehension_pass_recorded', {
-          change_name: changeName,
-          score_percent: record.score_percent,
-          attempt: record.attempt,
-          question_count: options.questionCount ?? 0,
-        });
-
         spinner?.stop();
 
+        const instructions = await generateApplyInstructions(projectRoot, changeName, options.schema, {
+          planningHome,
+          references,
+          projectConfig,
+        });
+
+        await emitComprehensionAttemptAfterPass({
+          changeDir,
+          changeName,
+          attempt: record.attempt,
+          failureCountBefore,
+          scorePercent: record.score_percent,
+          thresholdPercent: record.threshold_percent,
+          questionCount: record.question_count,
+          contextFiles: instructions.contextFiles,
+          applyReadyEmitted: instructions.applyReadyEmitted ?? false,
+        });
+
         if (options.json) {
-          const instructions = await generateApplyInstructions(projectRoot, changeName, options.schema, {
-            planningHome,
-            references,
-            projectConfig,
-          });
           console.log(
             JSON.stringify(
               {
@@ -648,20 +720,22 @@ export async function applyInstructionsCommand(options: ApplyInstructionsOptions
         }
 
         console.log(`Comprehension pass recorded (${record.score_percent}%).`);
-        const instructions = await generateApplyInstructions(projectRoot, changeName, options.schema, {
-          planningHome,
-          references,
-          projectConfig,
-        });
         printApplyInstructionsText(instructions);
         return;
       } catch (error) {
         spinner?.stop();
         if (error instanceof ComprehensionPassError) {
-          await trackEvent('comprehension_pass_failed', {
-            change_name: changeName,
-            score_percent: options.score,
-            attempt: options.attempt ?? 1,
+          await incrementComprehensionFailureCount(changeDir);
+          await trackComprehensionAttempt({
+            changeDir,
+            changeName,
+            attempt,
+            scorePercent: options.score,
+            thresholdPercent: error.threshold,
+            questionCount,
+            passed: false,
+            failureCountBefore,
+            contextFiles: contextFilesForPresence,
           });
           if (options.json) {
             console.log(

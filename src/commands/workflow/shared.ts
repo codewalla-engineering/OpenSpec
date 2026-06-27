@@ -63,6 +63,8 @@ export interface ApplyInstructions {
   instruction: string;
   /** Referenced-store index (read-only upstream context; omitted when none declared) */
   references?: ReferenceIndexEntry[];
+  /** True when apply_ready telemetry was emitted during this generation */
+  applyReadyEmitted?: boolean;
 }
 
 // -----------------------------------------------------------------------------

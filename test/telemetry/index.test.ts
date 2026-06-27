@@ -99,9 +99,37 @@ describe('telemetry/index', () => {
       );
     });
 
-    it('trackCommand delegates to captureEvent', async () => {
+    it('trackCommand delegates to captureEvent with context', async () => {
       const { trackCommand } = await import('../../src/telemetry/index.js');
-      await trackCommand('status', '1.0.0');
+      await trackCommand('status', '1.0.0', {
+        change_name: 'my-change',
+        command_category: 'diagnostic',
+      });
+      expect(mockCapture).toHaveBeenCalledWith(
+        expect.objectContaining({
+          properties: expect.objectContaining({
+            command: 'status',
+            change_name: 'my-change',
+            command_category: 'diagnostic',
+            caller: expect.any(String),
+          }),
+        })
+      );
+    });
+
+    it('skips identify when identify cache is fresh', async () => {
+      const { markUserIdentified } = await import('../../src/telemetry/identify-cache.js');
+      const { captureEvent } = await import('../../src/telemetry/client.js');
+      const { PostHog } = await import('posthog-node');
+
+      await markUserIdentified('dev@codewalla.com');
+      mockCapture.mockClear();
+      (PostHog as any).mockClear();
+
+      await captureEvent('command_executed', { command: 'status' });
+
+      const instance = (PostHog as any).mock.results[0]?.value;
+      expect(instance.identify).not.toHaveBeenCalled();
       expect(mockCapture).toHaveBeenCalled();
     });
 

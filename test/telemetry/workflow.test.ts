@@ -127,4 +127,31 @@ describe('telemetry/workflow', () => {
       })
     );
   });
+
+  it('emits artifact_was_done on artifact_instructions_requested', async () => {
+    const proposalPath = path.join(changeDir, 'proposal.md');
+    fs.writeFileSync(proposalPath, '# Proposal\n');
+
+    const { trackArtifactInstructions } = await import('../../src/telemetry/workflow.js');
+    mockCapture.mockClear();
+
+    await trackArtifactInstructions({
+      changeDir,
+      changeName: 'test-change',
+      artifactId: 'proposal',
+      artifactWasDone: true,
+      artifactPaths: [proposalPath],
+    });
+
+    expect(mockCapture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'artifact_instructions_requested',
+        properties: expect.objectContaining({
+          artifact_was_done: true,
+          artifact_paths: ['proposal.md'],
+          artifact_body: '# Proposal',
+        }),
+      })
+    );
+  });
 });
