@@ -5,6 +5,8 @@
  * a spec comprehension gate before implementation.
  */
 
+import { COMPREHENSION_PRESENT_AND_GRADE } from './user-prompt-guidance.js';
+
 export const COMPREHENSION_QUIZ_GUIDANCE = `4. **Comprehension quiz (required before implementation)**
 
    After \`openspec instructions apply --change "<name>" --json\`, check comprehension status:
@@ -31,10 +33,7 @@ export const COMPREHENSION_QUIZ_GUIDANCE = `4. **Comprehension quiz (required be
    - Good: "What is the primary file where quiz rules are centralized?" (answer from task substance)
    - Bad: "Which task number updates \`comprehension-guidance.ts\`?" or "What is the exact text of task 2.1?"
 
-   **Present and grade**
-   - Use the **AskUserQuestion tool** for each question (one at a time)
-   - Grade: \`score_percent = round(correct / question_count * 100)\`
-   - Pass when \`score_percent >= comprehension.thresholdPercent\` (default 80)
+   ${COMPREHENSION_PRESENT_AND_GRADE}
 
    **On failure (score below threshold)**
    - Announce score and that a new quiz is required
@@ -64,4 +63,6 @@ export const COMPREHENSION_QUIZ_GUIDANCE = `4. **Comprehension quiz (required be
 
 export const COMPREHENSION_APPLY_GUARDRAIL = `- NEVER implement code or mark tasks while \`missingComprehension\` is true
 - NEVER skip the comprehension quiz when the apply JSON requires it
+- NEVER answer comprehension quiz questions yourself — the human developer must answer every question
+- NEVER call \`--record-comprehension-pass\` until the user has answered every question
 - If the user asks to skip the quiz, refuse and explain they must pass or set comprehension.enabled: false in openspec/config.yaml`;

@@ -64,7 +64,7 @@ Change: `{ "id", "title", "deltaCount", "deltas": [...], "root" }`. Spec: `{ "id
 ### 4.6 `instructions apply --json`
 `{ "changeName", "changeDir", "schemaName", "contextFiles": { "<artifactId>": ["/abs", ...] }, "progress": {total,complete,remaining}, "tasks": [{id,description,done}], "state": "blocked"|"all_done"|"ready", "missingArtifacts"?, "missingComprehension"?, "comprehension"?: { "required", "passed", "thresholdPercent", "bestScorePercent"?, "questionCount", "requirementCount", "scenarioCount", "pendingTaskCount", "attempts"? }, "instruction", "references"?, "root" }`.
 
-When comprehension is required and not passed, `state` is `"blocked"` and `missingComprehension` is `true`. The blocked `instruction` references proposal, design, specs, and tasks; agents generate quiz questions from those artifacts (not task numbers or verbatim checkbox text).
+When comprehension is required and not passed, `state` is `"blocked"` and `missingComprehension` is `true`. The blocked `instruction` references proposal, design, specs, and tasks; agents generate quiz questions from those artifacts (not task numbers or verbatim checkbox text). Agents MUST present each question to the human developer in chat, wait for answers, and MUST NOT self-answer or call `--record-comprehension-pass` on the user's behalf.
 
 Record pass: `openspec instructions apply --change <id> --record-comprehension-pass --score <0-100> [--attempt <n>] [--question-count <n>] --json` → `{ "recorded": true, "comprehensionPass": {...}, ...apply fields..., "root" }` or exit 1 with `comprehension_score_below_threshold`.
 

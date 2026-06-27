@@ -6,6 +6,7 @@
  */
 import type { SkillTemplate, CommandTemplate } from '../types.js';
 import { STORE_SELECTION_GUIDANCE } from './store-selection.js';
+import { PROMPT_CLARIFY, PROMPT_OPEN_ENDED } from './user-prompt-guidance.js';
 
 export function getFfChangeSkillTemplate(): SkillTemplate {
   return {
@@ -21,7 +22,7 @@ ${STORE_SELECTION_GUIDANCE}
 
 1. **If no clear input provided, ask what they want to build**
 
-   Use the **AskUserQuestion tool** (open-ended, no preset options) to ask:
+   ${PROMPT_OPEN_ENDED} Ask:
    > "What change do you want to work on? Describe what you want to build or fix."
 
    From their description, derive a kebab-case name (e.g., "add user authentication" → \`add-user-auth\`).
@@ -72,7 +73,7 @@ ${STORE_SELECTION_GUIDANCE}
       - Stop when all \`applyRequires\` artifacts are done
 
    c. **If an artifact requires user input** (unclear context):
-      - Use **AskUserQuestion tool** to clarify
+      - ${PROMPT_CLARIFY}
       - Then continue with creation
 
 5. **Show final status**
@@ -126,7 +127,7 @@ ${STORE_SELECTION_GUIDANCE}
 
 1. **If no input provided, ask what they want to build**
 
-   Use the **AskUserQuestion tool** (open-ended, no preset options) to ask:
+   ${PROMPT_OPEN_ENDED} Ask:
    > "What change do you want to work on? Describe what you want to build or fix."
 
    From their description, derive a kebab-case name (e.g., "add user authentication" → \`add-user-auth\`).
@@ -177,7 +178,7 @@ ${STORE_SELECTION_GUIDANCE}
       - Stop when all \`applyRequires\` artifacts are done
 
    c. **If an artifact requires user input** (unclear context):
-      - Use **AskUserQuestion tool** to clarify
+      - ${PROMPT_CLARIFY}
       - Then continue with creation
 
 5. **Show final status**

@@ -15,6 +15,7 @@ import {
   COMPREHENSION_QUIZ_GUIDANCE,
 } from './comprehension-guidance.js';
 import { STORE_SELECTION_GUIDANCE } from './store-selection.js';
+import { PROMPT_SELECT_CHANGE } from './user-prompt-guidance.js';
 
 export function getApplyChangeSkillTemplate(): SkillTemplate {
   return {
@@ -33,7 +34,7 @@ ${STORE_SELECTION_GUIDANCE}
    If a name is provided, use it. Otherwise:
    - Infer from conversation context if the user mentioned a change
    - Auto-select if only one active change exists
-   - If ambiguous, run \`openspec list --json\` to get available changes and use the **AskUserQuestion tool** to let the user select
+   - If ambiguous, ${PROMPT_SELECT_CHANGE}
 
    Always announce: "Using change: <name>" and how to override (e.g., \`/opsx:apply <other>\`).
 
@@ -203,7 +204,7 @@ ${STORE_SELECTION_GUIDANCE}
    If a name is provided, use it. Otherwise:
    - Infer from conversation context if the user mentioned a change
    - Auto-select if only one active change exists
-   - If ambiguous, run \`openspec list --json\` to get available changes and use the **AskUserQuestion tool** to let the user select
+   - If ambiguous, ${PROMPT_SELECT_CHANGE}
 
    Always announce: "Using change: <name>" and how to override (e.g., \`/opsx:apply <other>\`).
 
