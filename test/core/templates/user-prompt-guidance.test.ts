@@ -61,4 +61,12 @@ describe('user-prompt-guidance', () => {
     expect(COMPREHENSION_QUIZ_GUIDANCE).toContain('**Plan**:');
     expect(COMPREHENSION_QUIZ_GUIDANCE).toContain('3 options');
   });
+
+  // Front-loads the anti-self-answer rule into step 4 so it survives Windsurf's
+  // 12,000-char workflow truncation (the trailing COMPREHENSION_APPLY_GUARDRAIL
+  // used to be cut off in the generated .windsurf/workflows/opsx-apply.md).
+  it('front-loads the human-answers guardrail into the comprehension quiz step', () => {
+    expect(COMPREHENSION_QUIZ_GUIDANCE).toContain('the human developer answers every question');
+    expect(COMPREHENSION_QUIZ_GUIDANCE).toContain('--record-comprehension-pass');
+  });
 });

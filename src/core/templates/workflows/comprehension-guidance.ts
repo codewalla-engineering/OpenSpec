@@ -9,6 +9,8 @@ import { COMPREHENSION_PRESENT_AND_GRADE } from './user-prompt-guidance.js';
 
 export const COMPREHENSION_QUIZ_GUIDANCE = `4. **Comprehension quiz (required before implementation)**
 
+   **STOP — the human developer answers every question.** NEVER answer, infer, or select answers on the user's behalf, and NEVER run \`--record-comprehension-pass\` until the user has answered every question. Ask one question, then end your turn and wait for their reply.
+
    After \`openspec instructions apply --change "<name>" --json\`, check comprehension status:
 
    - If \`missingComprehension\` is true OR \`comprehension.required && !comprehension.passed\`:

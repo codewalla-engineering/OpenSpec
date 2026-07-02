@@ -197,16 +197,13 @@ export function getOpsxApplyCommandTemplate(): CommandTemplate {
 
 ${STORE_SELECTION_GUIDANCE}
 
-**Input**: Optionally specify a change name (e.g., \`/opsx:apply add-auth\`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
+**Input**: Optionally specify a change name (e.g., \`/opsx:apply add-auth\`). If omitted, infer from conversation context; if ambiguous you MUST prompt for available changes.
 
 **Steps**
 
 1. **Select the change**
 
-   If a name is provided, use it. Otherwise:
-   - Infer from conversation context if the user mentioned a change
-   - Auto-select if only one active change exists
-   - If ambiguous, ${PROMPT_SELECT_CHANGE}
+   If a name is provided, use it. Otherwise infer from conversation context, auto-select if only one active change exists, or if ambiguous, ${PROMPT_SELECT_CHANGE}
 
    Always announce: "Using change: <name>" and how to override (e.g., \`/opsx:apply <other>\`).
 
@@ -214,28 +211,19 @@ ${STORE_SELECTION_GUIDANCE}
    \`\`\`bash
    openspec status --change "<name>" --json
    \`\`\`
-   Parse the JSON to understand:
-   - \`schemaName\`: The workflow being used (e.g., "spec-driven")
-   - \`planningHome\`, \`changeRoot\`, and \`actionContext\`: planning scope and edit constraints
-   - Which artifact contains the tasks (typically "tasks" for spec-driven, check status for others)
+   Parse \`schemaName\`, \`planningHome\`/\`changeRoot\`/\`actionContext\` (planning scope and edit constraints), and which artifact holds the tasks (typically "tasks" for spec-driven).
 
 3. **Get apply instructions**
-
    \`\`\`bash
    openspec instructions apply --change "<name>" --json
    \`\`\`
-
-   This returns:
-   - \`contextFiles\`: artifact ID -> array of concrete file paths (varies by schema)
-   - Progress (total, complete, remaining)
-   - Task list with status
-   - Dynamic instruction based on current state
+   Returns \`contextFiles\` (artifact ID -> file paths, varies by schema), progress, task list, and a dynamic instruction.
 
    **Handle states:**
-   - If \`state: "blocked"\` and \`missingArtifacts\`: show message, suggest using \`/opsx:continue\`
-   - If \`state: "blocked"\` and \`missingComprehension\`: proceed to step 4 (comprehension quiz) — do NOT implement
-   - If \`state: "all_done"\`: congratulate, suggest archive
-   - If \`state: "ready"\`: proceed to step 5
+   - \`blocked\` + \`missingArtifacts\`: show message, suggest \`/opsx:continue\`
+   - \`blocked\` + \`missingComprehension\`: proceed to step 4 (comprehension quiz) — do NOT implement
+   - \`all_done\`: congratulate, suggest archive
+   - \`ready\`: proceed to step 5
 
 ${ATLASSIAN_ENRICHMENT_GUIDANCE}
 
@@ -243,115 +231,28 @@ ${COMPREHENSION_QUIZ_GUIDANCE}
 
 5. **Read context files**
 
-   After comprehension is passed (or not required), read every file path listed under \`contextFiles\` from the apply instructions output.
-   The files depend on the schema being used:
-   - **spec-driven**: proposal, specs, design, plan, tasks
-   - Other schemas: follow the contextFiles from CLI output
+   After comprehension passes (or isn't required), read every path under \`contextFiles\` from the apply instructions output (varies by schema; spec-driven: proposal, specs, design, plan, tasks).
 
-6. **Show current progress**
-
-   Display:
-   - Schema being used
-   - Progress: "N/M tasks complete"
-   - Remaining tasks overview
-   - Dynamic instruction from CLI
+6. **Show current progress** — schema, progress ("N/M tasks complete"), remaining tasks, and the dynamic instruction from the CLI.
 
 7. **Implement tasks (loop until done or blocked)**
 
-   For each pending task:
-   - Show which task is being worked on
+   For each pending task, announce which task is being worked on.
 
 ${CONTEXT7_LOOKUP_GUIDANCE}
 
-   - Make the code changes required
-   - Keep changes minimal and focused
-   - Mark task complete in the tasks file: \`- [ ]\` → \`- [x]\`
-   - Continue to next task
+   - Make the required code changes (minimal and focused), mark the task \`- [ ]\` → \`- [x]\`, and continue.
+   - **After editing artifacts:** run \`openspec status --change "<name>" --json\` so revision tracking records content changes.
+   - **Pause if** a task is unclear, implementation reveals a design issue, you hit an error/blocker, or the user interrupts.
 
-   **After editing artifacts:** run \`openspec status --change "<name>" --json\` so revision tracking records content changes.
-
-   **Pause if:**
-   - Task is unclear → ask for clarification
-   - Implementation reveals a design issue → suggest updating artifacts
-   - Error or blocker encountered → report and wait for guidance
-   - User interrupts
-
-8. **On completion or pause, show status**
-
-   Display:
-   - Tasks completed this session
-   - Overall progress: "N/M tasks complete"
-   - If all done: suggest archive
-   - If paused: explain why and wait for guidance
-
-**Output During Implementation**
-
-\`\`\`
-## Implementing: <change-name> (schema: <schema-name>)
-
-Working on task 3/7: <task description>
-[...implementation happening...]
-✓ Task complete
-
-Working on task 4/7: <task description>
-[...implementation happening...]
-✓ Task complete
-\`\`\`
-
-**Output On Completion**
-
-\`\`\`
-## Implementation Complete
-
-**Change:** <change-name>
-**Schema:** <schema-name>
-**Progress:** 7/7 tasks complete ✓
-
-### Completed This Session
-- [x] Task 1
-- [x] Task 2
-...
-
-All tasks complete! You can archive this change with \`/opsx:archive\`.
-\`\`\`
-
-**Output On Pause (Issue Encountered)**
-
-\`\`\`
-## Implementation Paused
-
-**Change:** <change-name>
-**Schema:** <schema-name>
-**Progress:** 4/7 tasks complete
-
-### Issue Encountered
-<description of the issue>
-
-**Options:**
-1. <option 1>
-2. <option 2>
-3. Other approach
-
-What would you like to do?
-\`\`\`
+8. **On completion or pause, show status** — announce each task as you start it, mark it \`✓\` when done, and report progress ("N/M tasks complete"). On completion suggest \`/opsx:archive\`; on pause state the issue and options and ask how to proceed.
 
 **Guardrails**
-- Keep going through tasks until done or blocked
-- Always read context files before starting (from the apply instructions output)
-- If task is ambiguous, pause and ask before implementing
-- If implementation reveals issues, pause and suggest artifact updates
-- Keep code changes minimal and scoped to each task
-- Update task checkbox immediately after completing each task
-- Pause on errors, blockers, or unclear requirements - don't guess
-- Use contextFiles from CLI output, don't assume specific file names
+- Keep going until done or blocked; pause on ambiguity, errors, or design issues and ask before guessing
+- Read context files before starting (don't assume file names); keep changes minimal and scoped; update each checkbox immediately
 ${COMPREHENSION_APPLY_GUARDRAIL}
 ${PLAYWRIGHT_APPLY_GUARDRAIL}
 
-**Fluid Workflow Integration**
-
-This skill supports the "actions on a change" model:
-
-- **Can be invoked anytime**: Before all artifacts are done (if tasks exist), after partial implementation, interleaved with other actions
-- **Allows artifact updates**: If implementation reveals design issues, suggest updating artifacts - not phase-locked, work fluidly`
+**Fluid Workflow Integration** — invoke anytime (before all artifacts are done if tasks exist, after partial implementation, or interleaved). If implementation reveals design issues, suggest updating artifacts; not phase-locked.`
   };
 }
