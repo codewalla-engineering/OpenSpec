@@ -1,5 +1,11 @@
 # @codewalla_india/openspec
 
+## 1.3.1
+
+### Bug Fixes
+
+- **Windsurf `/opsx:apply` comprehension guardrail restored** — The generated `.windsurf/workflows/opsx-apply.md` exceeded Windsurf's hard 12,000-character workflow limit, so the trailing guardrail that forbids the agent from answering the comprehension quiz itself (and from calling `--record-comprehension-pass` before the human answers) was silently truncated. On Windsurf this let the agent take and self-record the quiz. The anti-self-answer rule is now front-loaded into the comprehension quiz step (step 4), and the apply workflow body was trimmed below 12,000 characters so every guardrail survives on Windsurf. Run `openspec update` in your project to regenerate the workflow.
+
 ## 1.3.0
 
 ### Minor Changes
