@@ -149,7 +149,7 @@ AI coding assistants are powerful but unpredictable when requirements live only 
 - **Work fluidly** — update any artifact anytime with `/opsx:modify`; no rigid phase gates
 - **Jira-native workflow** — propose from ticket keys, enrich from Jira during apply, traceability in proposal Impact
 - **MCP-powered** — Atlassian, Context7, and browser MCPs built into generated skills
-- **Use your tools** — works with 20+ AI assistants via slash commands
+- **Use your tools** — works with 30+ AI assistants via slash commands
 
 ## Updating OpenSpec
 

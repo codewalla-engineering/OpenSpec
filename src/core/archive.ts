@@ -21,6 +21,15 @@ import {
 import { trackChangeArchived, buildSpecDeltasFromUpdates } from '../telemetry/index.js';
 import { readChangeMetadata } from '../utils/change-metadata.js';
 
+function isMissingPathError(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as NodeJS.ErrnoException).code === 'ENOENT'
+  );
+}
+
 async function listActiveChangeNames(changesDir: string): Promise<string[]> {
   try {
     const entries = await fs.readdir(changesDir, { withFileTypes: true });
@@ -28,7 +37,8 @@ async function listActiveChangeNames(changesDir: string): Promise<string[]> {
       .filter((entry) => entry.isDirectory() && entry.name !== 'archive')
       .map((entry) => entry.name)
       .sort();
-  } catch {
+  } catch (error) {
+    if (!isMissingPathError(error)) throw error;
     return [];
   }
 }
@@ -194,13 +204,6 @@ export class ArchiveCommand {
     const archiveDir = root.archiveDir;
     const mainSpecsDir = root.specsDir;
 
-    // Check if changes directory exists
-    try {
-      await fs.access(changesDir);
-    } catch {
-      throw new Error("No OpenSpec changes directory found. Run 'openspec init' first.");
-    }
-
     // Get change name interactively if not provided
     if (!changeName) {
       if (json) {
@@ -308,6 +311,7 @@ export class ArchiveCommand {
         }
         console.log(chalk.red('\nValidation failed. Please fix the errors before archiving.'));
         console.log(chalk.yellow('To skip validation (not recommended), use --no-validate flag.'));
+        process.exitCode = 1;
         return null;
       }
     } else if (json) {
@@ -341,7 +345,7 @@ export class ArchiveCommand {
     }
 
     // Show progress and check for incomplete tasks
-    const progress = await getTaskProgressForChange(changesDir, changeName);
+    const progress = await getTaskProgressForChange(changesDir, changeName, path.resolve(changesDir, '..', '..'));
     if (!json) {
       const status = formatTaskStatus(progress);
       console.log(`Task status: ${status}`);
@@ -434,6 +438,7 @@ export class ArchiveCommand {
             }
             console.log(String(err.message || err));
             console.log('Aborted. No files were changed.');
+            process.exitCode = 1;
             return null;
           }
 
@@ -457,6 +462,7 @@ export class ArchiveCommand {
                   else if (issue.level === 'WARNING') console.log(chalk.yellow(`  ⚠ ${issue.message}`));
                 }
                 console.log('Aborted. No files were changed.');
+                process.exitCode = 1;
                 return null;
               }
             }
@@ -544,12 +550,7 @@ export class ArchiveCommand {
 
   private async selectChange(changesDir: string): Promise<string | null> {
     const { select } = await import('@inquirer/prompts');
-    // Get all directories in changes (excluding archive)
-    const entries = await fs.readdir(changesDir, { withFileTypes: true });
-    const changeDirs = entries
-      .filter(entry => entry.isDirectory() && entry.name !== 'archive')
-      .map(entry => entry.name)
-      .sort();
+    const changeDirs = await listActiveChangeNames(changesDir);
 
     if (changeDirs.length === 0) {
       console.log('No active changes found.');
@@ -561,7 +562,7 @@ export class ArchiveCommand {
     try {
       const progressList: Array<{ id: string; status: string }> = [];
       for (const id of changeDirs) {
-        const progress = await getTaskProgressForChange(changesDir, id);
+        const progress = await getTaskProgressForChange(changesDir, id, path.resolve(changesDir, '..', '..'));
         const status = formatTaskStatus(progress);
         progressList.push({ id, status });
       }

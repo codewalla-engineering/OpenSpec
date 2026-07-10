@@ -148,6 +148,7 @@ CLAUDE.md
 
 # Pnpm
 .pnpm-store/
+/package-lock.json
 result
 
 # OpenCode
@@ -164,3 +165,6 @@ opencode.json
 # Codewalla telemetry identity (project-local fallback — primary is ~/.config/openspec/)
 .openspec/telemetry-identity
 .windsurf/...
+
+# Trae
+.trae/
