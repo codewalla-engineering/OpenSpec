@@ -87,24 +87,36 @@ export async function captureEvent(
 ): Promise<void> {
   const userId = await resolveTelemetryUserId({ prompt: false });
   if (!userId) {
+    if (process.env.OPENSPEC_TELEMETRY_DEBUG === '1') {
+      console.error(`[openspec telemetry] skip "${event}": no identity configured`);
+    }
     return;
   }
 
   try {
     await identifyUser(userId);
-    getClient().capture({
+    const client = getClient();
+    if (process.env.OPENSPEC_TELEMETRY_DEBUG === '1') {
+      console.error(
+        `[openspec telemetry] capture "${event}" → ${getPostHogHost()} (key ${getPostHogKey().slice(0, 10)}…)`
+      );
+    }
+    client.capture({
       distinctId: userId,
       event,
       properties: {
         ...properties,
-        ...personUpdates?.$set ? { $set: personUpdates.$set } : {},
-        ...personUpdates?.$increment ? { $increment: personUpdates.$increment } : {},
+        ...(personUpdates?.$set ? { $set: personUpdates.$set } : {}),
+        ...(personUpdates?.$increment ? { $increment: personUpdates.$increment } : {}),
         version: PACKAGE_VERSION,
         surface: 'cli',
         caller: resolveCaller(),
         $ip: null,
       },
     });
+    // flushAt:1 queues immediately, but the HTTP send is still async.
+    // Await flush so postAction shutdown cannot race and drop the event.
+    await client.flush();
   } catch {
     // Silent failure
   }

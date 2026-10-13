@@ -187,7 +187,7 @@ export class ValidateCommand {
       const report = await validator.validateChangeDeltaSpecs(changeDir);
       const durationMs = Date.now() - start;
       this.printReport('change', id, report, durationMs, opts.json, root);
-      trackEvent('change_validated', { valid: report.valid, issue_count: report.issues.length, strict: opts.strict, duration_ms: durationMs });
+      await trackEvent('change_validated', { valid: report.valid, issue_count: report.issues.length, strict: opts.strict, duration_ms: durationMs });
       process.exitCode = report.valid ? 0 : 1;
       return;
     }
@@ -196,7 +196,7 @@ export class ValidateCommand {
     const report = await validator.validateSpec(file);
     const durationMs = Date.now() - start;
     this.printReport('spec', id, report, durationMs, opts.json, root);
-    trackEvent('spec_validated', { valid: report.valid, issue_count: report.issues.length, strict: opts.strict, duration_ms: durationMs });
+    await trackEvent('spec_validated', { valid: report.valid, issue_count: report.issues.length, strict: opts.strict, duration_ms: durationMs });
     process.exitCode = report.valid ? 0 : 1;
   }
 
@@ -351,7 +351,7 @@ export class ValidateCommand {
       }
     }
 
-    trackEvent('bulk_validation_run', {
+    await trackEvent('bulk_validation_run', {
       total: summary.totals.items,
       passed: summary.totals.passed,
       failed: summary.totals.failed,

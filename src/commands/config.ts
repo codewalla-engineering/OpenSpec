@@ -293,7 +293,7 @@ export function registerConfigCommand(program: Command): void {
     .description('Set a value (auto-coerce types)')
     .option('--string', 'Force value to be stored as string')
     .option('--allow-unknown', 'Allow setting unknown keys')
-    .action((key: string, value: string, options: { string?: boolean; allowUnknown?: boolean }) => {
+    .action(async (key: string, value: string, options: { string?: boolean; allowUnknown?: boolean }) => {
       const allowUnknown = Boolean(options.allowUnknown);
       const keyValidation = validateConfigKeyPath(key);
       if (!keyValidation.valid && !allowUnknown) {
@@ -323,7 +323,7 @@ export function registerConfigCommand(program: Command): void {
       // Apply changes and save
       setNestedValue(config, key, coercedValue);
       saveGlobalConfig(config as GlobalConfig);
-      trackEvent('config_value_set', { key });
+      await trackEvent('config_value_set', { key });
 
       const displayValue =
         typeof coercedValue === 'string' ? `"${coercedValue}"` : String(coercedValue);
@@ -611,7 +611,7 @@ export function registerConfigCommand(program: Command): void {
         config.delivery = nextState.delivery;
         config.workflows = nextState.workflows;
         saveGlobalConfig(config);
-        trackEvent('config_profile_changed', {
+        await trackEvent('config_profile_changed', {
           profile: nextState.profile,
           delivery: nextState.delivery,
           workflow_count: nextState.workflows.length,

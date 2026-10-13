@@ -221,7 +221,7 @@ class WorksetCommand {
       }
 
       await updateWorksetsState((state) => withWorkset(state, workset));
-      trackEvent('workset_created', {
+      await trackEvent('workset_created', {
         member_count: workset.members.length,
         has_tool: Boolean(workset.tool),
       });
@@ -463,7 +463,7 @@ class WorksetCommand {
         );
       }
 
-      trackEvent('workset_opened', {
+      await trackEvent('workset_opened', {
         opener_style: opener.style,
         member_count: prepared.surviving.length,
         skipped_count: prepared.skipped.length,
@@ -552,7 +552,7 @@ class WorksetCommand {
       }
 
       await removeWorkset(name);
-      trackEvent('workset_removed');
+      await trackEvent('workset_removed');
 
       if (options.json) {
         printJson({ removed: { name }, status: [] });

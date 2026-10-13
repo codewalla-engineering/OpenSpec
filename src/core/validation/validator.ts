@@ -1,5 +1,5 @@
 import { z, ZodError } from 'zod';
-import { readFileSync, promises as fs } from 'fs';
+import { existsSync, readFileSync, promises as fs } from 'fs';
 import path from 'path';
 import { SpecSchema, ChangeSchema, Spec, Change } from '../schemas/index.js';
 import { MarkdownParser } from '../parsers/markdown-parser.js';
@@ -13,6 +13,7 @@ import {
 import { parseDeltaSpec, normalizeRequirementName } from '../parsers/requirement-blocks.js';
 import { findMainSpecStructureIssues } from '../parsers/spec-structure.js';
 import { FileSystemUtils } from '../../utils/file-system.js';
+import { validatePlan } from './plan-validator.js';
 
 export class Validator {
   private strictMode: boolean;
@@ -268,6 +269,17 @@ export class Validator {
 
     if (totalDeltas === 0) {
       issues.push({ level: 'ERROR', path: 'file', message: this.enrichTopLevelError('change', VALIDATION_MESSAGES.CHANGE_NO_DELTAS) });
+    }
+
+    const planPath = path.join(changeDir, 'plan.md');
+    if (existsSync(planPath)) {
+      const planResult = validatePlan(planPath);
+      for (const error of planResult.errors) {
+        issues.push({ level: 'ERROR', path: 'plan.md', message: error });
+      }
+      for (const warning of planResult.warnings) {
+        issues.push({ level: 'WARNING', path: 'plan.md', message: warning });
+      }
     }
 
     return this.createReport(issues);

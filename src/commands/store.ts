@@ -525,7 +525,7 @@ class StoreCommand {
       }
       const result = await setupPreparedStore(prepared, { initGit });
       const payload = toMutationOutput(result);
-      trackEvent('store_setup', {
+      await trackEvent('store_setup', {
         git_initialized: result.git.initialized,
         already_registered: result.registryCommit.alreadyRegistered,
         has_remote: Boolean(options.remote),
@@ -570,7 +570,7 @@ class StoreCommand {
       }
 
       const payload = toMutationOutput(result);
-      trackEvent('store_registered', {
+      await trackEvent('store_registered', {
         already_registered: result.registryCommit.alreadyRegistered,
         git_is_repository: result.git.isRepository,
       });
@@ -616,7 +616,7 @@ class StoreCommand {
       await confirmRemove(target.id, target.root, options);
       const result = await removeStore(target);
       const payload = toCleanupOutput(result);
-      trackEvent('store_removed', {
+      await trackEvent('store_removed', {
         files_deleted: result.files.deleted,
       });
 

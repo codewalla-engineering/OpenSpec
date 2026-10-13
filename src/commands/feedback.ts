@@ -123,7 +123,7 @@ function displayFormattedFeedback(title: string, body: string): void {
  * Submit feedback via gh CLI
  * Uses execFileSync to prevent shell injection vulnerabilities
  */
-function submitViaGhCli(title: string, body: string): void {
+async function submitViaGhCli(title: string, body: string): Promise<void> {
   try {
     const result = execFileSync(
       'gh',
@@ -143,7 +143,7 @@ function submitViaGhCli(title: string, body: string): void {
     );
 
     const issueUrl = result.trim();
-    trackEvent('feedback_submitted', { has_body: Boolean(body) });
+    await trackEvent('feedback_submitted', { has_body: Boolean(body) });
     console.log(`\n✓ Feedback submitted successfully!`);
     console.log(`Issue URL: ${issueUrl}\n`);
   } catch (error: any) {
@@ -205,6 +205,6 @@ export class FeedbackCommand {
     }
 
     // Submit via gh CLI
-    submitViaGhCli(title, body);
+    await submitViaGhCli(title, body);
   }
 }
