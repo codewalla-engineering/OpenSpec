@@ -1212,8 +1212,7 @@ ORDER BY properties.attempt ASC
 | Variable | Description |
 |----------|-------------|
 | `OPENSPEC_TELEMETRY_USER` | Email or username for CI/non-interactive telemetry (alternative to identity file) |
-| `POSTHOG_API_KEY` | Optional override for PostHog project key (embedded by default) |
-| `POSTHOG_HOST` | Optional override for PostHog host (default: `https://us.i.posthog.com`) |
+
 | `OPENSPEC_CONCURRENCY` | Default concurrency for bulk validation (default: 6) |
 | `OPENSPEC_CALLER` | Optional override for auto-detected telemetry `caller` (e.g. custom agent name) |
 | `EDITOR` or `VISUAL` | Editor for `openspec config edit` |

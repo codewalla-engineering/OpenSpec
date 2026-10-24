@@ -300,12 +300,7 @@ Bulk archive detects when multiple changes touch the same specs and resolves con
 
 By default, `/opsx:apply` runs a **three-option multiple-choice comprehension quiz** on proposal, design, delta specs, plan, and pending tasks before any implementation (5–10 questions, scaled to change size). The CLI exposes `comprehension.questionAllocation` so **plan receives the majority** of questions when present. Questions test holistic understanding—motivation, design decisions, code map, requirements, and implementation approach—not task numbers or verbatim checkbox text. You need **≥ 80%** to proceed. The CLI blocks `openspec instructions apply` until a pass is recorded; failed attempts get new questions. Editing plan.md after a pass requires retaking the quiz. **You** answer the quiz in chat—the agent presents one question at a time and waits; it must not answer for you.
 
-Disable for a project in `openspec/config.yaml`:
-
-```yaml
-comprehension:
-  enabled: false
-```
+The gate cannot be disabled or tuned — `openspec/config.yaml` has no `comprehension` settings; any such block is ignored.
 
 ### Completing a Change
 

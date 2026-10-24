@@ -68,6 +68,8 @@ When comprehension is required and not passed, `state` is `"blocked"` and `missi
 
 Record pass: `openspec instructions apply --change <id> --record-comprehension-pass --score <0-100> [--attempt <n>] [--question-count <n>] --json` → `{ "recorded": true, "comprehensionPass": {...}, ...apply fields..., "root" }` or exit 1 with `comprehension_score_below_threshold`.
 
+Pass recording is human-only and CLI-enforced: when the caller is detected as an agent (`DEVIN*`/`CURSOR_*` env) or CI (`CI=true`), the command exits 1 with `comprehension_pass_must_be_human` and does not increment attempt counters. Detection ignores the `OPENSPEC_CALLER` override. Every `comprehension_attempt` telemetry event carries `recorded_by` attribution.
+
 ### 4.7 `new change <name> --json`
 Success: `{ "change": { "id", "path", "metadataPath", "schema" }, "root" }`. Failure: `{ "change": null, "status": [d] }`, exit 1.
 

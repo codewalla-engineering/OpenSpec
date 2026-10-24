@@ -4,6 +4,7 @@
 import { PostHog } from 'posthog-node';
 import { createRequire } from 'module';
 import { resolveCaller } from './caller.js';
+import { getEventSchema, type TelemetryEventName } from './events.js';
 import { markUserIdentified, shouldIdentifyUser } from './identify-cache.js';
 import { resolveTelemetryUserId } from './identity.js';
 
@@ -30,18 +31,13 @@ async function safeTelemetryFetch(input: string | URL | Request, init?: RequestI
   return new Response(null, { status: 204 });
 }
 
-function getPostHogKey(): string {
-  return process.env.POSTHOG_API_KEY ?? DEFAULT_POSTHOG_KEY;
-}
-
-function getPostHogHost(): string {
-  return process.env.POSTHOG_HOST ?? DEFAULT_POSTHOG_HOST;
-}
-
+// The destination is hard-coded by design. This is an internal tool and its
+// analytics are not customizable — POSTHOG_API_KEY / POSTHOG_HOST env vars are
+// deliberately ignored.
 function getClient(): PostHog {
   if (!posthogClient) {
-    posthogClient = new PostHog(getPostHogKey(), {
-      host: getPostHogHost(),
+    posthogClient = new PostHog(DEFAULT_POSTHOG_KEY, {
+      host: DEFAULT_POSTHOG_HOST,
       flushAt: 1,
       flushInterval: 0,
       fetchRetryCount: 0,
@@ -80,34 +76,76 @@ export interface PersonPropertyUpdates {
   $increment?: Record<string, number>;
 }
 
-export async function captureEvent(
+function isTelemetryDisabled(): boolean {
+  // Test-harness escape hatch only — keeps spawned CLI e2e tests offline.
+  // Not a user-facing setting; do not document as configuration.
+  return process.env.OPENSPEC_TELEMETRY_DISABLE === '1';
+}
+
+function telemetryDebug(message: string): void {
+  if (process.env.OPENSPEC_TELEMETRY_DEBUG === '1') {
+    console.error(`[openspec telemetry] ${message}`);
+  }
+}
+
+function filterProps(
+  props: Record<string, unknown>,
+  allowed: readonly string[] | undefined,
   event: string,
-  properties: Record<string, unknown>,
+  kind: string
+): Record<string, unknown> {
+  if (!allowed) {
+    return {};
+  }
+  const allowedSet = new Set(allowed);
+  const filtered: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(props)) {
+    if (allowedSet.has(key)) {
+      filtered[key] = value;
+    } else {
+      telemetryDebug(`strip "${key}" from "${event}" (${kind} not in schema)`);
+    }
+  }
+  return filtered;
+}
+
+export async function captureEvent(
+  event: TelemetryEventName,
+  properties: Record<string, unknown> = {},
   personUpdates?: PersonPropertyUpdates
 ): Promise<void> {
+  const schema = getEventSchema(event);
+  if (!schema) {
+    telemetryDebug(`drop "${event}": not in event registry`);
+    return;
+  }
+
+  if (isTelemetryDisabled()) {
+    telemetryDebug(`skip "${event}": telemetry disabled`);
+    return;
+  }
+
   const userId = await resolveTelemetryUserId({ prompt: false });
   if (!userId) {
-    if (process.env.OPENSPEC_TELEMETRY_DEBUG === '1') {
-      console.error(`[openspec telemetry] skip "${event}": no identity configured`);
-    }
+    telemetryDebug(`skip "${event}": no identity configured`);
     return;
   }
 
   try {
     await identifyUser(userId);
     const client = getClient();
-    if (process.env.OPENSPEC_TELEMETRY_DEBUG === '1') {
-      console.error(
-        `[openspec telemetry] capture "${event}" → ${getPostHogHost()} (key ${getPostHogKey().slice(0, 10)}…)`
-      );
-    }
+    telemetryDebug(`capture "${event}" → ${DEFAULT_POSTHOG_HOST} (key ${DEFAULT_POSTHOG_KEY.slice(0, 10)}…)`);
     client.capture({
       distinctId: userId,
       event,
       properties: {
-        ...properties,
-        ...(personUpdates?.$set ? { $set: personUpdates.$set } : {}),
-        ...(personUpdates?.$increment ? { $increment: personUpdates.$increment } : {}),
+        ...filterProps(properties, schema.props, event, 'property'),
+        ...(personUpdates?.$set
+          ? { $set: filterProps(personUpdates.$set, schema.personSet, event, '$set') }
+          : {}),
+        ...(personUpdates?.$increment
+          ? { $increment: filterProps(personUpdates.$increment, schema.personIncrement, event, '$increment') }
+          : {}),
         version: PACKAGE_VERSION,
         surface: 'cli',
         caller: resolveCaller(),
@@ -148,7 +186,7 @@ export function getClientConfigForTests(): { key: string; host: string } | null 
   if (!posthogClient) {
     return null;
   }
-  return { key: getPostHogKey(), host: getPostHogHost() };
+  return { key: DEFAULT_POSTHOG_KEY, host: DEFAULT_POSTHOG_HOST };
 }
 
 /** @internal Test helper — returns the custom fetch from PostHog options */
@@ -156,4 +194,4 @@ export function getTelemetryFetchForTests(): typeof fetch | null {
   return safeTelemetryFetch;
 }
 
-export { safeTelemetryFetch, getClient, getPostHogHost, getPostHogKey };
+export { safeTelemetryFetch, getClient };

@@ -759,7 +759,36 @@ apply:
       expect(json.recorded).toBe(false);
     });
 
-    it('skips comprehension gate when disabled in config', async () => {
+    it('rejects comprehension pass recording from detected agents', async () => {
+      await createChangeWithDeltaSpecs('comp-agent');
+
+      const result = await runCLI(
+        [
+          'instructions',
+          'apply',
+          '--change',
+          'comp-agent',
+          '--record-comprehension-pass',
+          '--score',
+          '100',
+          '--json',
+        ],
+        { cwd: tempDir, env: { DEVIN_SESSION_ID: 'test-session' } }
+      );
+      expect(result.exitCode).toBe(1);
+      const json = JSON.parse(result.stdout);
+      expect(json.recorded).toBe(false);
+      expect(json.status[0].code).toBe('comprehension_pass_must_be_human');
+
+      // Rejection happens before the attempt counter increments.
+      const marker = await fs.readFile(
+        path.join(tempDir, 'openspec', 'changes', 'comp-agent', '.openspec-telemetry.yaml'),
+        'utf-8'
+      ).catch(() => '');
+      expect(marker).not.toContain('comprehension_attempt_count');
+    });
+
+    it('ignores comprehension.enabled: false in config (gate is mandatory)', async () => {
       await fs.mkdir(path.join(tempDir, 'openspec'), { recursive: true });
       await fs.writeFile(
         path.join(tempDir, 'openspec', 'config.yaml'),
@@ -773,8 +802,8 @@ apply:
       );
       expect(result.exitCode).toBe(0);
       const json = JSON.parse(result.stdout);
-      expect(json.state).toBe('ready');
-      expect(json.missingComprehension).toBeUndefined();
+      expect(json.state).toBe('blocked');
+      expect(json.missingComprehension).toBe(true);
     });
 
     it('blocks apply again after delta spec edit invalidates pass', async () => {

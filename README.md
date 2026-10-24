@@ -173,7 +173,7 @@ openspec update
 
 **Modify before apply**: `/opsx:modify` revises planning artifacts and propagates changes downstream. It is pre-apply only — once tasks are checked off in `/opsx:apply`, use manual edits or start a new change.
 
-**Comprehension check**: `/opsx:apply` runs a short quiz (enabled by default) on proposal, design, specs, plan, and pending tasks before implementation. Questions test holistic understanding of the change, not task numbers or checklist trivia; plan receives the majority of questions when present. You need ≥ 80% to proceed. Disable with `comprehension.enabled: false` in `openspec/config.yaml`. See [Workflows](docs/workflows.md#comprehension-quiz-before-apply).
+**Comprehension check**: `/opsx:apply` runs a short mandatory quiz on proposal, design, specs, plan, and pending tasks before implementation. Questions test holistic understanding of the change, not task numbers or checklist trivia; plan receives the majority of questions when present. You need ≥ 80% to proceed. The gate is always on and not configurable. See [Workflows](docs/workflows.md#comprehension-quiz-before-apply).
 
 ## Other
 

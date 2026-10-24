@@ -79,12 +79,24 @@ export async function runCLI(args: string[] = [], options: RunCLIOptions = {}): 
   const invocation = [cliEntry, ...finalArgs].join(' ');
 
   return new Promise<RunCLIResult>((resolve, reject) => {
+    // Strip agent/CI env signals so spawned CLI runs detect as a human caller
+    // regardless of the host environment (e.g. tests launched inside Devin or
+    // a Cursor agent session). Tests can re-add these via options.env.
+    const baseEnv = { ...process.env };
+    for (const key of Object.keys(baseEnv)) {
+      if (key.startsWith('DEVIN') || key.startsWith('CURSOR_')) {
+        delete baseEnv[key];
+      }
+    }
+    delete baseEnv.CI;
+    delete baseEnv.OPENSPEC_CALLER;
+
     const child = spawn(process.execPath, [cliEntry, ...finalArgs], {
       cwd: options.cwd ?? projectRoot,
       env: {
-        ...process.env,
+        ...baseEnv,
         OPEN_SPEC_INTERACTIVE: '0',
-        POSTHOG_HOST: 'http://127.0.0.1:1',
+        OPENSPEC_TELEMETRY_DISABLE: '1',
         ...options.env,
       },
       stdio: ['pipe', 'pipe', 'pipe'],

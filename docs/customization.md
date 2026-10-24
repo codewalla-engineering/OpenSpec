@@ -44,15 +44,9 @@ rules:
     - Use Given/When/Then format
     - Reference existing patterns before inventing new ones
 
-# Comprehension quiz before apply (enabled by default)
-comprehension:
-  enabled: true
-  threshold_percent: 80
-  min_questions: 5
-  max_questions: 10
 ```
 
-Set `comprehension.enabled: false` to skip the proposal/design/spec/plan/task quiz gate on `/opsx:apply`.
+The comprehension quiz gate before `/opsx:apply` is mandatory and not configurable — a `comprehension:` block in `config.yaml` is ignored with a warning.
 
 ### How It Works
 

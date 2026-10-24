@@ -14,6 +14,7 @@ vi.mock('posthog-node', () => ({
   PostHog: vi.fn().mockImplementation(() => ({
     capture: mockCapture,
     identify: vi.fn(),
+    flush: vi.fn().mockResolvedValue(undefined),
     shutdown: mockShutdown,
   })),
 }));

@@ -52,16 +52,9 @@ export const ProjectConfigSchema = z.object({
     .optional()
     .describe('Store id used as the OpenSpec root when no local planning shape exists'),
 
-  // Optional: apply comprehension quiz gate (default enabled when absent)
-  comprehension: z
-    .object({
-      enabled: z.boolean().optional(),
-      threshold_percent: z.number().int().min(0).max(100).optional(),
-      min_questions: z.number().int().positive().optional(),
-      max_questions: z.number().int().positive().optional(),
-    })
-    .optional()
-    .describe('Comprehension quiz gate before apply'),
+  // Note: `comprehension` is deliberately NOT a configurable field. The
+  // comprehension gate is mandatory internal behavior; any comprehension:
+  // block in config.yaml is ignored (see readProjectConfig warning below).
 });
 
 /** Normalized in-memory shape of a referenced store declaration. */
@@ -73,13 +66,6 @@ export interface DeclarationEntry {
 
 export type ProjectConfig = z.infer<typeof ProjectConfigSchema> & {
   references?: DeclarationEntry[];
-  /** Normalized comprehension settings (camelCase in memory). */
-  comprehension?: {
-    enabled?: boolean;
-    thresholdPercent?: number;
-    minQuestions?: number;
-    maxQuestions?: number;
-  };
 };
 
 /**
@@ -270,27 +256,11 @@ export function readProjectConfig(projectRoot: string): ProjectConfig | null {
     }
 
     if (raw.comprehension !== undefined) {
-      const comprehensionField = z.object({
-        enabled: z.boolean().optional(),
-        threshold_percent: z.number().int().min(0).max(100).optional(),
-        min_questions: z.number().int().positive().optional(),
-        max_questions: z.number().int().positive().optional(),
-      });
-
-      const comprehensionResult = comprehensionField.safeParse(raw.comprehension);
-      if (comprehensionResult.success) {
-        const c = comprehensionResult.data;
-        config.comprehension = {
-          ...(c.enabled !== undefined ? { enabled: c.enabled } : {}),
-          ...(c.threshold_percent !== undefined
-            ? { thresholdPercent: c.threshold_percent }
-            : {}),
-          ...(c.min_questions !== undefined ? { minQuestions: c.min_questions } : {}),
-          ...(c.max_questions !== undefined ? { maxQuestions: c.max_questions } : {}),
-        };
-      } else {
-        console.warn(`Invalid 'comprehension' field in config (must be an object)`);
-      }
+      // The comprehension gate is mandatory and not customizable. Surface a
+      // warning so a config author isn't confused about why it still applies.
+      console.warn(
+        `Warning: ignoring 'comprehension' field in ${configPathForWarnings(projectRoot)} (the apply comprehension gate is always enabled and not configurable).`
+      );
     }
 
     // Return partial config even if some fields failed

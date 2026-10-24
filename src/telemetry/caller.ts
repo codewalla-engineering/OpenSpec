@@ -10,11 +10,13 @@ function detectCursorAgentEnv(): boolean {
   return Boolean(process.env.CURSOR_AGENT || process.env.CURSOR_SESSION_ID);
 }
 
-export function resolveCaller(): string {
-  const override = process.env.OPENSPEC_CALLER?.trim();
-  if (override) {
-    return override;
-  }
+/**
+ * Caller detection from env signals only — never consults OPENSPEC_CALLER.
+ * Used for enforcement and attribution (e.g. comprehension pass recording)
+ * where the override would be a spoof vector. Not cryptographic: a determined
+ * process can scrub its env, but this is honest default-deny.
+ */
+export function detectCaller(): string {
   if (detectDevinEnv()) {
     return 'devin';
   }
@@ -28,4 +30,12 @@ export function resolveCaller(): string {
     return 'automation';
   }
   return 'human';
+}
+
+export function resolveCaller(): string {
+  const override = process.env.OPENSPEC_CALLER?.trim();
+  if (override) {
+    return override;
+  }
+  return detectCaller();
 }

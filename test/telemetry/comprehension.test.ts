@@ -13,6 +13,7 @@ vi.mock('posthog-node', () => ({
   PostHog: vi.fn().mockImplementation(() => ({
     capture: mockCapture,
     identify: vi.fn(),
+    flush: vi.fn().mockResolvedValue(undefined),
     shutdown: vi.fn().mockResolvedValue(undefined),
   })),
 }));
@@ -121,6 +122,33 @@ describe('telemetry/comprehension', () => {
         }),
       })
     );
+  });
+
+  it('stamps comprehension_attempt with recorded_by from env-signal detection', async () => {
+    process.env.DEVIN_SESSION_ID = 'test-session';
+    const { trackComprehensionAttempt } = await import('../../src/telemetry/comprehension.js');
+
+    await trackComprehensionAttempt({
+      changeDir,
+      changeName: 'test-change',
+      attempt: 1,
+      scorePercent: 90,
+      thresholdPercent: 80,
+      questionCount: 5,
+      passed: true,
+      failureCountBefore: 0,
+      contextFiles: {},
+    });
+
+    expect(mockCapture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'comprehension_attempt',
+        properties: expect.objectContaining({
+          recorded_by: 'devin',
+        }),
+      })
+    );
+    delete process.env.DEVIN_SESSION_ID;
   });
 
   it('emits comprehension_attempt with next_milestone on pass', async () => {

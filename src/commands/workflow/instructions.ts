@@ -57,6 +57,7 @@ import {
   trackComprehensionAttempt,
   trackComprehensionGateChecked,
   trackComprehensionRetakeRequired,
+  detectCaller,
 } from '../../telemetry/index.js';
 import {
   normalizeEditor,
@@ -655,6 +656,41 @@ export async function applyInstructionsCommand(options: ApplyInstructionsOptions
     const { projectConfig, references } = await loadRootConfigContext(root);
 
     if (options.recordComprehensionPass) {
+      // The comprehension gate is human-only: detected agents and CI must not
+      // self-certify. detectCaller() ignores the OPENSPEC_CALLER override so
+      // it cannot be relabeled. Rejected before attempt counters increment.
+      // Note: 'automation' (non-TTY stdin) is allowed — a human piping the
+      // command is indistinguishable from a script, and agent environments
+      // carry DEVIN_*/CURSOR_* markers anyway. The attempt is still stamped
+      // recorded_by so automated recordings are visible in telemetry.
+      const recordingCaller = detectCaller();
+      if (recordingCaller === 'devin' || recordingCaller === 'cursor-agent' || recordingCaller === 'ci') {
+        spinner?.stop();
+        const message = `Comprehension passes must be recorded by a human running the CLI interactively (detected caller: ${recordingCaller}).`;
+        if (options.json) {
+          console.log(
+            JSON.stringify(
+              {
+                recorded: false,
+                status: [
+                  {
+                    severity: 'error',
+                    code: 'comprehension_pass_must_be_human',
+                    message,
+                  },
+                ],
+              },
+              null,
+              2
+            )
+          );
+        } else {
+          console.error(`Error: ${message}`);
+        }
+        process.exitCode = 1;
+        return;
+      }
+
       if (options.score === undefined) {
         spinner?.stop();
         throw new Error('--score is required with --record-comprehension-pass');

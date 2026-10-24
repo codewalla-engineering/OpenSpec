@@ -4,9 +4,10 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import { randomUUID } from 'node:crypto';
 
-const { mockCapture, mockIdentify, mockShutdown } = vi.hoisted(() => ({
+const { mockCapture, mockIdentify, mockShutdown, mockFlush } = vi.hoisted(() => ({
   mockCapture: vi.fn(),
   mockIdentify: vi.fn(),
+  mockFlush: vi.fn().mockResolvedValue(undefined),
   mockShutdown: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -14,6 +15,7 @@ vi.mock('posthog-node', () => ({
   PostHog: vi.fn().mockImplementation(() => ({
     capture: mockCapture,
     identify: mockIdentify,
+    flush: mockFlush,
     shutdown: mockShutdown,
   })),
 }));
@@ -154,6 +156,77 @@ describe('telemetry/index', () => {
 
       const response = await fetchFn('https://us.i.posthog.com/batch/', { method: 'POST' });
       expect(response.status).toBe(204);
+    });
+  });
+
+  describe('locked-down telemetry', () => {
+    it('ignores POSTHOG_API_KEY and POSTHOG_HOST env overrides', async () => {
+      process.env.POSTHOG_API_KEY = 'phc_attackerkey';
+      process.env.POSTHOG_HOST = 'https://evil.example.com';
+      const { PostHog } = await import('posthog-node');
+      const { captureEvent, DEFAULT_POSTHOG_KEY, DEFAULT_POSTHOG_HOST } = await import(
+        '../../src/telemetry/client.js'
+      );
+
+      await captureEvent('command_executed', { command: 'status', version: '1.0.0' });
+
+      expect(PostHog).toHaveBeenCalledWith(
+        DEFAULT_POSTHOG_KEY,
+        expect.objectContaining({ host: DEFAULT_POSTHOG_HOST })
+      );
+    });
+
+    it('drops events that are not in the registry', async () => {
+      const { captureEvent } = await import('../../src/telemetry/client.js');
+
+      // @ts-expect-error - unknown event names are rejected at compile time too
+      await captureEvent('dev_invented_event', { anything: 1 });
+
+      expect(mockCapture).not.toHaveBeenCalled();
+    });
+
+    it('strips properties that are not whitelisted for the event', async () => {
+      const { captureEvent } = await import('../../src/telemetry/client.js');
+
+      await captureEvent('command_executed', {
+        command: 'status',
+        password: 'hunter2',
+        sneaky: 'value',
+      });
+
+      const props = mockCapture.mock.calls[0][0].properties;
+      expect(props.command).toBe('status');
+      expect(props).not.toHaveProperty('password');
+      expect(props).not.toHaveProperty('sneaky');
+    });
+
+    it('strips person updates that are not whitelisted', async () => {
+      const { captureEvent } = await import('../../src/telemetry/client.js');
+
+      await captureEvent(
+        'comprehension_attempt',
+        { change_name: 'c' },
+        {
+          $set: {
+            comprehension_last_pass_attempt: 2,
+            is_admin: true,
+          },
+          $increment: { comprehension_failures_total: 1, visits: 5 },
+        }
+      );
+
+      const props = mockCapture.mock.calls[0][0].properties;
+      expect(props.$set).toEqual({ comprehension_last_pass_attempt: 2 });
+      expect(props.$increment).toEqual({ comprehension_failures_total: 1 });
+    });
+
+    it('does not capture when OPENSPEC_TELEMETRY_DISABLE=1', async () => {
+      process.env.OPENSPEC_TELEMETRY_DISABLE = '1';
+      const { captureEvent } = await import('../../src/telemetry/client.js');
+
+      await captureEvent('command_executed', { command: 'status' });
+
+      expect(mockCapture).not.toHaveBeenCalled();
     });
   });
 

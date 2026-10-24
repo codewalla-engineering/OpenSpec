@@ -141,12 +141,13 @@ describe('comprehension pass record', () => {
     ).toThrow(ComprehensionPassError);
   });
 
-  it('checkComprehensionGate skipped when disabled', () => {
+  it('checkComprehensionGate cannot be disabled via config', () => {
     const gate = checkComprehensionGate(dir, [specPath], {
       schema: 'spec-driven',
-      comprehension: { enabled: false },
+      // The comprehension block is ignored — the gate is mandatory.
+      ...({ comprehension: { enabled: false } } as object),
     });
-    expect(gate.active).toBe(false);
-    expect(gate.passed).toBe(true);
+    expect(gate.active).toBe(true);
+    expect(gate.passed).toBe(false);
   });
 });

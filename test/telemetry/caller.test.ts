@@ -58,4 +58,21 @@ describe('telemetry/caller', () => {
     const { resolveCaller } = await import('../../src/telemetry/caller.js');
     expect(resolveCaller()).toBe('human');
   });
+
+  it('detectCaller ignores OPENSPEC_CALLER (enforcement cannot be spoofed)', async () => {
+    process.env.OPENSPEC_CALLER = 'human';
+    process.env.DEVIN_SESSION_ID = 'abc';
+    Object.defineProperty(process.stdin, 'isTTY', { value: true, configurable: true });
+    const { detectCaller, resolveCaller } = await import('../../src/telemetry/caller.js');
+    expect(detectCaller()).toBe('devin');
+    expect(resolveCaller()).toBe('human');
+  });
+
+  it('detectCaller detects human for interactive terminal without override', async () => {
+    delete process.env.OPENSPEC_CALLER;
+    delete process.env.CI;
+    Object.defineProperty(process.stdin, 'isTTY', { value: true, configurable: true });
+    const { detectCaller } = await import('../../src/telemetry/caller.js');
+    expect(detectCaller()).toBe('human');
+  });
 });

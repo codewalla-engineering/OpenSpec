@@ -3,6 +3,7 @@
  */
 import { resolveTelemetryUserId } from './identity.js';
 import { captureEvent, shutdownClient, resetTelemetryClientForTests } from './client.js';
+import type { TelemetryEventName } from './events.js';
 import type { CommandTelemetryContext } from './command-context.js';
 import { sanitizeErrorForTelemetry } from './content.js';
 
@@ -23,6 +24,7 @@ export {
   ensureTelemetryIdentity,
 } from './identity.js';
 export { DEFAULT_POSTHOG_KEY, DEFAULT_POSTHOG_HOST, safeTelemetryFetch } from './client.js';
+export { EVENT_SCHEMAS, type TelemetryEventName } from './events.js';
 export {
   sanitizeWorkflowInput,
   sanitizeTelemetryContent,
@@ -40,7 +42,7 @@ export {
   type CommandTelemetryContext,
   type CommandCategory,
 } from './command-context.js';
-export { resolveCaller } from './caller.js';
+export { resolveCaller, detectCaller } from './caller.js';
 
 export async function trackCommand(
   commandName: string,
@@ -57,7 +59,7 @@ export async function trackCommand(
 }
 
 export async function trackEvent(
-  event: string,
+  event: TelemetryEventName,
   properties: Record<string, unknown> = {}
 ): Promise<void> {
   await captureEvent(event, properties);

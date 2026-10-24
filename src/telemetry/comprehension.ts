@@ -2,6 +2,7 @@
  * Comprehension gate and attempt telemetry.
  */
 import type { ComprehensionGateInfo } from '../core/comprehension/index.js';
+import { detectCaller } from './caller.js';
 import { captureEvent } from './client.js';
 import {
   collectArtifactBodiesMap,
@@ -71,6 +72,9 @@ export async function trackComprehensionAttempt(params: {
 
   const baseProps = await enrichFromMarker(params.changeDir, {
     change_name: params.changeName,
+    // Attribution uses env-signal detection (no OPENSPEC_CALLER override) so
+    // agents cannot relabel a self-recorded attempt as human.
+    recorded_by: detectCaller(),
     attempt: params.attempt,
     score_percent: params.scorePercent,
     threshold_percent: params.thresholdPercent,
